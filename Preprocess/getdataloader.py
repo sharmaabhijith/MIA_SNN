@@ -226,7 +226,7 @@ def GetCifar10_0(batch_size, num_workers, attack=False):
     return train_dataloader, test_dataloader
 
 
-def GetCifar10(batch_size, num_workers, train_test_split=0.9, shuffle=True, attack=False):
+def GetCifar10(batch_size, num_workers, train_test_split=-1, shuffle=True, attack=False):
     if shuffle==True:
         trans_train = transforms.Compose([transforms.RandomCrop(32, padding=4),
                                     transforms.RandomHorizontalFlip(),
@@ -255,16 +255,20 @@ def GetCifar10(batch_size, num_workers, train_test_split=0.9, shuffle=True, atta
             ])
 
     # Load the training and test datasets
-    train_data_part = datasets.CIFAR10(DIR['CIFAR10'], train=True, transform=trans_train, download=True)
-    test_data_part = datasets.CIFAR10(DIR['CIFAR10'], train=False, transform=trans_test, download=True)
-    # Combine both datasets into one full dataset
-    full_data = ConcatDataset([train_data_part, test_data_part])
-    # Split the full dataset
-    split_size = int(len(full_data)*train_test_split)
-    train_data, test_data = random_split(full_data, [split_size, len(full_data) - split_size])
+    train_data = datasets.CIFAR10(DIR['CIFAR10'], train=True, transform=trans_train, download=True)
+    test_data = datasets.CIFAR10(DIR['CIFAR10'], train=False, transform=trans_test, download=True)
+
+    if train_test_split!=-1:
+        # Combine both datasets into one full dataset
+        full_data = ConcatDataset([train_data, test_data])
+        # Split the full dataset
+        split_size = int(len(full_data)*train_test_split)
+        train_data, test_data = random_split(full_data, [split_size, len(full_data) - split_size])
+    
     # Create DataLoaders
     train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
 
     return train_dataloader, test_dataloader
 

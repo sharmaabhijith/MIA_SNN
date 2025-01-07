@@ -21,11 +21,13 @@ DATASETS=("cifar10")
 
 TRAIN_TEST_SPLIT=0.5
 
+EXP_TYPE="ANN2SNN"
+
 # Loop through each model and run the training script
 for DATASET in "${DATASETS[@]}"; do
 	for MODEL in "${MODELS[@]}"; do 
 		echo "Training $MODEL on $DATASET..."
-		python3 train_ann.py --dataset "$DATASET" --model "$MODEL" --train_split $TRAIN_TEST_SPLIT
+		python3 train_ann.py --dataset "$DATASET" --model "$MODEL" --train_split $TRAIN_TEST_SPLIT EXP_TYPE="ANN2SNN"
 		echo "Finished training $MODEL"
 		echo "--------------------------------"
 	done

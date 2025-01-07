@@ -17,6 +17,7 @@ from datetime import datetime
 parser = argparse.ArgumentParser(description='PyTorch ANN-SNN Conversion')
 parser.add_argument('--dataset', default='cifar10', type=str, help='Dataset name',
                     choices=['cifar10', 'cifar100', 'imagenet', 'tiny-imagenet', 'fashion'])
+parser.add_argument('--train_split', default=-1, type=float, help='Train Test Dataset Split')
 parser.add_argument('--model', default='vgg16', type=str, help='Model name',
                     choices=['cifarnet', 'small', 'vgg16', 'resnet18', 'resnet20',
                              'vgg11', 'vgg13', 'vgg16', 'vgg19', 'vgg16_normed',
@@ -24,14 +25,31 @@ parser.add_argument('--model', default='vgg16', type=str, help='Model name',
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory for saving models')
 parser.add_argument('--iter', default=200, type=int, help='Number of iterations for finding th values')
 parser.add_argument('--samples', default=10000, type=int, help='Number of iterations for finding th values')
+parser.add_argument('--exp_type', default='RMIA', type=str, help='Model name',
+                    choices=['ANN2SNN', 'RMIA', 'RMIA_SNN'])
+
+
 args = parser.parse_args()
 
-# Configure logger
-GlobalLogger.initialize(f"Logs/threshold_{args.model}_{args.dataset}_i{str(args.iter)}_N{str(args.samples)}.log")
+# Creating directory to save trained models
+exp_models_path = os.path.join(args.checkpoint, args.exp_type, args.dataset, args.model)
+if os.path.exists(exp_models_path) is False:
+    print("Creating model directory:", exp_models_path)
+    os.makedirs(exp_models_path)
+
+# Creating directory to save Log files
+exp_logs_path = os.path.join("logs", args.exp_type, args.dataset, args.model)
+if os.path.exists(exp_logs_path) is False:
+    print("Creating model directory:", exp_logs_path)
+    os.makedirs(exp_logs_path)
+    
+# Configure logging
+GlobalLogger.initialize(f"{exp_logs_path}/threshold_{args.model}_{args.dataset}_i{args.iter}_N{str(args.samples)}.log")
 logger = GlobalLogger.get_logger(__name__)
 
+
 args.mid = f'{args.dataset}_{args.model}'
-savename = os.path.join(args.checkpoint, args.mid)+"_new"
+savename = os.path.join(exp_models_path, args.mid)+"_new"
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 logger.info(f'Using device: {device}')
 batch_size = 128
@@ -42,7 +60,9 @@ thresholds_13 = np.zeros(n_steps)
 
 def extract_features(L=2):
     logger.info(f'Extracting features for layer L={L}, n_steps={n_steps}')
-    train_loader, test_loader = datapool(args.dataset, batch_size, 2)
+    logger.info("Loading dataset...")
+    train_loader, test_loader = datapool(args.dataset, batch_size, 2, args.train_split)
+    logger.info(f"Dataset loaded successfully. Training batches: {len(train_loader)}, Test batches: {len(test_loader)}")
     
     with torch.no_grad():
         features = []

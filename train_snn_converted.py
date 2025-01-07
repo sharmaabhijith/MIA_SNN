@@ -123,8 +123,9 @@ parser = argparse.ArgumentParser(description='PyTorch ANN-SNN Conversion')
 parser.add_argument('--t', default=300, type=int, help='T Latency length (Simulation time-steps)')
 parser.add_argument('--dataset', default='cifar10', type=str, help='Dataset name',
                     choices=['cifar10', 'cifar100', 'imagenet','tiny-imagenet','fashion'])
+parser.add_argument('--train_split', default=-1, type=float, help='Train Test Dataset Split')
 parser.add_argument('--model', default='vgg16', type=str, help='Model name',
-                    choices=['vgg16', 'resnet18', 'resnet50'])
+                    choices=['vgg16', 'resnet18', 'resnet34', 'resnet50'])
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory for saving models')
 parser.add_argument('--batchsize', default=64, type=int)
 parser.add_argument('--lr', default=5e-3, type=float, help='Learning rate')
@@ -132,31 +133,50 @@ parser.add_argument('--wd', default=5e-4, type=float, help='Weight decay')
 parser.add_argument('--epochs', default=50, type=int)
 parser.add_argument('--device', default='cuda:0', type=str)
 parser.add_argument('--constant_lr', action='store_true')
+parser.add_argument('--exp_type', default='RMIA', type=str, help='Model name',
+                    choices=['ANN2SNN', 'RMIA', 'RMIA_SNN'])
+
 
 args = parser.parse_args()
+
+# Creating directory to save trained models
+exp_models_path = os.path.join(args.checkpoint, args.exp_type, args.dataset, args.model)
+if os.path.exists(exp_models_path) is False:
+    print("Creating model directory:", exp_models_path)
+    os.makedirs(exp_models_path)
+
+# Creating directory to save Log files
+exp_logs_path = os.path.join("logs", args.exp_type, args.dataset, args.model)
+if os.path.exists(exp_logs_path) is False:
+    print("Creating model directory:", exp_logs_path)
+    os.makedirs(exp_logs_path)
+    
 # Configure logging
-log_filename = f"Logs/snn_train_{args.model}_{args.dataset}_lr{str(args.lr)}_T{str(args.t)}.log"
-GlobalLogger.initialize(log_filename)
+GlobalLogger.initialize(f"{exp_logs_path}/snn_train_{args.model}_{args.dataset}_lr{args.lr}_T{str(args.t)}.log")
 logger = GlobalLogger.get_logger(__name__)
 
 
 logger.info(f"Arguments: {args}")
 args.mid = f'{args.dataset}_{args.model}'
-savename = os.path.join(args.checkpoint, args.mid)+"_new"
-train_loader, test_loader = datapool(args.dataset, args.batchsize, num_workers=2, shuffle=True)
+savename = os.path.join(exp_models_path, args.mid)+"_new"
+logger.info("Loading dataset...")
+train_loader, test_loader = datapool(args.dataset, args.batchsize, 2, args.train_split)
+logger.info(f"Dataset loaded successfully. Training batches: {len(train_loader)}, Test batches: {len(test_loader)}")
 criterion = nn.CrossEntropyLoss()
-
 device = torch.device(args.device)
 n_steps = args.t
+
 model = modelpool(args.model, args.dataset)
 model.load_state_dict(torch.load(savename + '.pth'))
 num_relu = str(model).count('ReLU')
 thresholds = torch.zeros(num_relu, 2*n_steps)
 thresholds1 = torch.Tensor(np.load('%s_threshold_all_noaug%d.npy' % (savename, 1)))
 ann_to_snn(model, thresholds, thresholds1, n_steps)
+
 if n_steps > 1:
     model.load_state_dict(torch.load(savename + '_updated_snn1_%d.pth' % (n_steps-1)))
 model.to(device)
+
 optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd)
 para1, para2, para3 = regular_set(model)
 optimizer = torch.optim.SGD([

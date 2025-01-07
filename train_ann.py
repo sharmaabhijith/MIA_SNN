@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description='PyTorch ANN-SNN Conversion')
 parser.add_argument('--t', default=300, type=int, help='T Latency length (Simulation time-steps)')
 parser.add_argument('--dataset', default='cifar10', type=str, help='Dataset name',
                     choices=['cifar10', 'cifar100', 'tiny-imagenet', 'imagenet', 'fashion'])
-parser.add_argument('--train_split', default=0.9, type=float, help='Train Test Dataset Split')
+parser.add_argument('--train_split', default=-1, type=float, help='Train Test Dataset Split')
 parser.add_argument('--model', default='vgg16', type=str, help='Model name',
                     choices=['small', 'vgg16', 'resnet18', 'resnet20', 'vgg16_no_bn',
                              'vgg11', 'vgg13', 'vgg16', 'vgg19', 'vgg16_normed', 'alexnet',
@@ -78,7 +78,7 @@ try:
 
     # Load data
     logger.info("Loading dataset...")
-    train_loader, test_loader = datapool(args.dataset, batch_size, 2, args.train_split, shuffle=True)
+    train_loader, test_loader = datapool(args.dataset, batch_size, 2, args.train_split)
     logger.info(f"Dataset loaded successfully. Training batches: {len(train_loader)}, Test batches: {len(test_loader)}")
 
     # Define loss and optimizer
