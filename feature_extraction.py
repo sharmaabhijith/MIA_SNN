@@ -143,3 +143,5 @@ for model_idx in range(1, args.reference_models+1):
     np.save(f'{savename}_threshold_all_noaug{n_steps}.npy', thresholds_all)
     np.save(f'{savename}_threshold_pos_all_noaug{n_steps}.npy', thresholds_pos_all)
     logger.info('Successfully saved threshold arrays')
+
+    GlobalLogger.reset_logger()

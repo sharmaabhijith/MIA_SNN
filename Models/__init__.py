@@ -24,8 +24,8 @@ def modelpool(MODELNAME, DATANAME):
         return resnet18(num_classes=num_classes)
     elif MODELNAME.lower() == 'resnet34':
         return resnet34(num_classes=num_classes)
-    elif MODELNAME.lower() == 'resnet20':
-        return resnet20(num_classes=num_classes)
+    elif MODELNAME.lower() == 'resnet50':
+        return resnet50(num_classes=num_classes)
     elif MODELNAME.lower() == 'small':
         return small(num_classes=num_classes,in_channel = in_channel)
     elif MODELNAME.lower() == 'cifarnet':

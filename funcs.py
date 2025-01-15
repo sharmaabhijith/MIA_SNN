@@ -6,7 +6,7 @@ from utils import *
 import random
 import os
 import logging
-
+import pickle
 # Configure logging
 logger = GlobalLogger.get_logger(__name__)
 
@@ -50,7 +50,7 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
     model.cuda(device)
     para1, para2, para3 = regular_set(model)
     
-    #optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 	#optimizer = torch.optim.SGD
     #(
     #        [
@@ -62,13 +62,13 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
     #        momentum=0.1
 	#)
 	
-    optimizer = torch.optim.SGD(
-            [
-                {'params': para1, 'weight_decay': wd}, {'params': para2, 'weight_decay': wd}, {'params': para3, 'weight_decay': wd}
-            ], 
-            lr=lr, 
-            momentum=0.1
-        )
+    # optimizer = torch.optim.SGD(
+    #         [
+    #             {'params': para1, 'weight_decay': wd}, {'params': para2, 'weight_decay': wd}, {'params': para3, 'weight_decay': wd}
+    #         ], 
+    #         lr=lr, 
+    #         momentum=0.9
+    #     )
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     
     best_acc = 0
@@ -100,6 +100,8 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
 
         if tmp_acc >= best_acc:
             torch.save(model.state_dict(), save + '.pth')
+            with open(save + ".pkl", "wb") as f:
+                pickle.dump(model.state_dict(), f)
             best_acc = tmp_acc
             logger.info(f"New best model saved with accuracy: {best_acc:.4f}")
 

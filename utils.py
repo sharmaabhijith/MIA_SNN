@@ -26,6 +26,13 @@ class GlobalLogger:
                 root_logger.addHandler(handler)
             
             cls._initialized = True
+    
+    @classmethod
+    def reset_logger(cls):
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:  # Copy the list to avoid iteration issues
+            root_logger.removeHandler(handler)
+        cls._initialized = False
 
     @classmethod
     def get_logger(cls, name=None):

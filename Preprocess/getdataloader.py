@@ -8,9 +8,9 @@ import torch.utils.data as data
 from Preprocess.augment import Cutout, CIFAR10Policy
 from Preprocess.cifar10_dvs import CIFAR10DVS
 from PIL import Image, ImageEnhance, ImageOps
+from typing import List, Tuple, Any
 import random
 import numpy as np
-from getdataset import *
 import logging
 # ## Change to your own data dir
 DIR = {'SVHN': './datasets','Fashion':'./datasets','CIFAR10': './datasets', 'CIFAR100': './datasets','ImageNet': './datasets', 'MNIST': './datasets'}

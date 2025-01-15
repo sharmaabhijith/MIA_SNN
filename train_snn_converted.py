@@ -185,8 +185,8 @@ for model_idx in range(1, args.reference_models+1):
         f"Training model {model_idx}: Train size {len(train_idxs)}, Test size {len(test_idxs)}"
     )
     logger.info("Creating dataloader...")
-    train_loader = get_dataloader(Subset(dataset, train_idxs), batch_size=batch_size, shuffle=True)
-    test_loader = get_dataloader(Subset(dataset, test_idxs), batch_size=batch_size)
+    train_loader = get_dataloader_from_dataset(Subset(dataset, train_idxs), batch_size=batch_size, shuffle=True)
+    test_loader = get_dataloader_from_dataset(Subset(dataset, test_idxs), batch_size=batch_size)
     logger.info(
         f"Dataset loaded successfully. Training batches: {len(train_loader)}, 
         Test batches: {len(test_loader)}"
@@ -232,3 +232,5 @@ for model_idx in range(1, args.reference_models+1):
     logger.info("Testing calibrated SNN accuracy...")
     test_loss, test_acc = test_snn(model, test_loader, n_steps, criterion, device)
     logger.info(f"Final Accuracy: {test_acc:.2f}%")
+
+    GlobalLogger.reset_logger()

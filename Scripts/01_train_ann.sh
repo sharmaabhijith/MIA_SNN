@@ -14,12 +14,12 @@
 
 
 # List of models to train
-MODELS=("resnet18")
+MODELS=("resnet50")
 
 # Dataset
 DATASETS=("cifar10")
 
-REF_MODELS=(4 2)
+REF_MODELS=(4)
 
 # Loop through each model and run the training script
 for REF in "${REF_MODELS[@]}"; do

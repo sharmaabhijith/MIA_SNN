@@ -30,9 +30,9 @@ parser.add_argument('--model', default='vgg16', type=str, help='Model name',
                              'vgg11', 'vgg13', 'vgg16', 'vgg19', 'vgg16_normed', 'alexnet',
                              'resnet18', 'resnet19', 'resnet20', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'cifarnet'])
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory for saving models')
-parser.add_argument('--lr', default=0.1, type=float, help='Learning rate')
-parser.add_argument('--wd', default=5e-4, type=float, help='Weight decay')
-parser.add_argument('--epochs', default=300, type=int)
+parser.add_argument('--lr', default=0.001, type=float, help='Learning rate')
+parser.add_argument('--wd', default=0, type=float, help='Weight decay')
+parser.add_argument('--epochs', default=50, type=int)
 parser.add_argument('--reference_models', default=4, type=int, help='Number of reference models')
 
 args = parser.parse_args()
@@ -103,3 +103,5 @@ for model_idx in range(1, args.reference_models+1):
     logger.info("Starting training...")
     train_ann(train_loader, test_loader, model, num_epochs, device, criterion, args.lr, args.wd, savename)
     logger.info("Training completed successfully")
+
+    GlobalLogger.reset_logger()

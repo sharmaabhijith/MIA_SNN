@@ -9,7 +9,6 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
-from dataset import TabularDataset, TextDataset, load_agnews
 
 
 def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
@@ -17,7 +16,7 @@ def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
     Function to load the dataset from the pickle file or download it from the internet.
 
     Args:
-        dataset_name (str): Dataset name.
+        dataset (str): Dataset name.
         data_dir (str): Indicate the log directory for loading the dataset.
         logger (logging.Logger): Logger object for the current run.
 
@@ -33,11 +32,11 @@ def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
             all_data = pickle.load(file)
         logger.info(f"Load data from {path}.pkl")
     else:
-        if dataset_name == "cifar10":
+        if dataset == "cifar10":
             transform = transforms.Compose(
                 [
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
                 ]
             )
             all_data = torchvision.datasets.CIFAR10(
@@ -53,7 +52,7 @@ def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
             with open(f"{path}.pkl", "wb") as file:
                 pickle.dump(all_data, file)
             logger.info(f"Save data to {path}.pkl")
-        elif dataset_name == "cifar100":
+        elif dataset == "cifar100":
             transform = transforms.Compose(
                 [
                     transforms.ToTensor(),
@@ -73,22 +72,7 @@ def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
             with open(f"{path}.pkl", "wb") as file:
                 pickle.dump(all_data, file)
             logger.info(f"Save data to {path}.pkl")
-        elif dataset_name == "purchase100":
-            if os.path.exists(f"{data_dir}/dataset_purchase"):
-                df = pd.read_csv(
-                    f"{data_dir}/dataset_purchase", header=None, encoding="utf-8"
-                ).to_numpy()
-                y = df[:, 0] - 1
-                X = df[:, 1:].astype(np.float32)
-                all_data = TabularDataset(X, y)
-                with open(f"{path}.pkl", "wb") as file:
-                    pickle.dump(all_data, file)
-                logger.info(f"Save data to {path}.pkl")
-            else:
-                raise NotImplementedError(
-                    f"{dataset_name} is not installed correctly in {data_dir}/dataset_purchase"
-                )
-        elif dataset_name == "texas100":
+        elif dataset == "texas100":
             if os.path.exists(f"{data_dir}/dataset_texas/feats"):
                 X = (
                     pd.read_csv(
@@ -113,10 +97,10 @@ def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
                 logger.info(f"Save data to {path}.pkl")
             else:
                 raise NotImplementedError(
-                    f"{dataset_name} is not installed correctly in {data_dir}/dataset_texas"
+                    f"{dataset} is not installed correctly in {data_dir}/dataset_texas"
                 )
         else:
-            raise NotImplementedError(f"{dataset_name} is not implemented")
+            raise NotImplementedError(f"{dataset} is not implemented")
 
     logger.info(f"The whole dataset size: {len(all_data)}")
     return all_data
@@ -138,7 +122,7 @@ def split_dataset_for_training(dataset_size, num_reference_models):
     indices = np.arange(dataset_size)
     split_index = len(indices) // 2
     num_reference_models = math.ceil(num_reference_models/2)
-    master_keep = np.full(2*num_reference_models, dataset_size), True, dtype=bool)
+    master_keep = np.full((2*num_reference_models, dataset_size), True, dtype=bool)
 
     for i in range(num_reference_models):
         np.random.shuffle(indices)
