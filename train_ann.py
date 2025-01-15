@@ -83,8 +83,8 @@ for model_idx in range(1, args.reference_models+1):
         data_split_info, memberships = split_dataset(len(dataset), args.reference_models)
         pickle.dump(data_split_info, open(os.path.join(primary_log_path,"data_splits.pkl"), "wb"))
     # Creating dataloader
-    train_idxs = data_split_info[model_idx]["train"]
-    test_idxs = data_split_info[model_idx]["test"]
+    train_idxs = data_split_info[model_idx-1]["train"]
+    test_idxs = data_split_info[model_idx-1]["test"]
     logger.info(
         f"Training model {model_idx}: Train size {len(train_idxs)}, Test size {len(test_idxs)}"
     )

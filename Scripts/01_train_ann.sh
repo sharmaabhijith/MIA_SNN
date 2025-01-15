@@ -14,7 +14,7 @@
 
 
 # List of models to train
-MODELS=("resnet50")
+MODELS=("resnet34")
 
 # Dataset
 DATASETS=("cifar10")
