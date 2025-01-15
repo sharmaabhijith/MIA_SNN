@@ -4,17 +4,39 @@ import torch
 # from textwrap import fill
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, random_split, ConcatDataset
-import torch.utils.data as data
+import torch.utils.data as data, Dataset
 from Preprocess.augment import Cutout, CIFAR10Policy
 from Preprocess.cifar10_dvs import CIFAR10DVS
 from PIL import Image, ImageEnhance, ImageOps
 import random
 import numpy as np
+from getdataset import *
+import logging
 # ## Change to your own data dir
 DIR = {'SVHN': './datasets','Fashion':'./datasets','CIFAR10': './datasets', 'CIFAR100': './datasets','ImageNet': './datasets', 'MNIST': './datasets'}
 
 # code from https://github.com/uoguelph-mlrg/Cutout/blob/master/util/cutout.py 
 # Improved Regularization of Convolutional Neural Networks with Cutout.
+
+class InfinitelyIndexableDataset(Dataset):
+    """
+    A PyTorch Dataset that is able to index the given dataset infinitely.
+    This is a helper class to allow easier and more efficient computation later when repeatedly indexing the dataset.
+
+    Args:
+        dataset (torch.utils.data.Dataset): The dataset to be indexed repeatedly.
+    """
+
+    def __init__(self, dataset: Dataset) -> None:
+        self.dataset = dataset
+
+    def __len__(self) -> int:
+        return len(self.dataset)
+
+    def __getitem__(self, idx: int) -> Any:
+        # If the index is out of range, wrap it around
+        return self.dataset[idx % len(self.dataset)]
+
 
 class Cutout(object):
 
@@ -236,7 +258,6 @@ def GetCifar10(batch_size, num_workers, train_test_split=-1, shuffle=True, attac
                                     Cutout(n_holes=1, length=16)
                                     ])
     else:
-        
         trans_train = transforms.Compose([#transforms.RandomCrop(32, padding=4),
                                     #transforms.RandomHorizontalFlip(),
                                     #CIFAR10Policy(),
@@ -268,7 +289,6 @@ def GetCifar10(batch_size, num_workers, train_test_split=-1, shuffle=True, attac
     # Create DataLoaders
     train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-
 
     return train_dataloader, test_dataloader
 
