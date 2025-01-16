@@ -1,6 +1,5 @@
 #! /bin/bash
 
-
 #SBATCH --job-name=ann_model_traning # Job name
 #SBATCH --output=outputs/ann_train_output.txt
 #SBATCH --nodes=1
@@ -19,6 +18,7 @@ MODELS=("resnet34")
 # Dataset
 DATASETS=("cifar10")
 
+# Number of reference models in the experiment
 REF_MODELS=(4)
 
 # Loop through each model and run the training script

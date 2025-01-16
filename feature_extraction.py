@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from spiking_layer_ours import *
 from Models import modelpool
-from Preprocess import datapool
+from Preprocess import datapool, get_dataloader_from_dataset, load_dataset
 import os
 import argparse
 from funcs import *
@@ -12,13 +12,11 @@ import time
 import sys
 import calc_th_with_c as ft
 import logging
+import pickle
 from datetime import datetime
 
-def extract_features(L=2):
+def extract_features(L=2, train_loader, test_loader):
     logger.info(f'Extracting features for layer L={L}, n_steps={n_steps}')
-    logger.info("Loading dataset...")
-    train_loader, test_loader = datapool(args.dataset, batch_size, 2, args.train_split)
-    logger.info(f"Dataset loaded successfully. Training batches: {len(train_loader)}, Test batches: {len(test_loader)}")
     
     with torch.no_grad():
         features = []
@@ -86,7 +84,7 @@ parser.add_argument('--reference_models', default=4, type=int, help='Number of r
 
 args = parser.parse_args()
 
-batch_size = 128
+batch_size = 256
 sample = 0
 n_steps = 1
 
@@ -109,7 +107,6 @@ for model_idx in range(1, args.reference_models+1):
         print("Creating log directory:", full_log_path)
         os.makedirs(full_log_path)
 
-for model_idx in range(1, args.reference_models+1):
     # Configure logging
     GlobalLogger.initialize(
         os.path.join(
@@ -123,6 +120,27 @@ for model_idx in range(1, args.reference_models+1):
     logger.info("Starting SNN calibration")
     logger.info(f"Arguments: {args}")
     logger.info(f"Device: {'GPU' if torch.cuda.is_available() else 'CPU'}")
+    if model_idx==1:
+        # Load the dataset using the specified parameters
+        logger.info("Loading dataset...")
+        dataset = load_dataset(args.dataset, logger)
+        try:
+            data_split_file = os.path.join(primary_model_path, "data_splits.pkl")
+            with open(data_split_file, 'rb') as file:
+                data_split_info = pickle.load(file)
+            logger.info("Data split information successfully loaded:")
+        except FileNotFoundError:
+            logger.info(f"Error: The file '{data_split_file}' does not exist")
+    # Creating dataloader
+    train_idxs = data_split_info[model_idx-1]["train"]
+    test_idxs = data_split_info[model_idx-1]["test"]
+    logger.info(
+        f"Training model {model_idx}: Train size {len(train_idxs)}, Test size {len(test_idxs)}"
+    )
+    logger.info("Creating dataloader...")
+    train_loader = get_dataloader_from_dataset(Subset(dataset, train_idxs), batch_size=batch_size, shuffle=True)
+    test_loader = get_dataloader_from_dataset(Subset(dataset, test_idxs), batch_size=batch_size)
+    logger.info(f"Dataset loaded successfully. Training batches: {len(train_loader)}, Test batches: {len(test_loader)}")
     # Load the specified model from the model pool
     logger.info(f"Loading model: {args.model} for dataset: {args.dataset}")
     savename = os.path.join(primary_model_path, f"model_{model_idx}", f"ann")
@@ -138,7 +156,7 @@ for model_idx in range(1, args.reference_models+1):
     thresholds_pos_all = np.zeros((num_relu, n_steps*2))
     for i in range(num_relu):
         logger.info(f'Processing ReLU layer {i+1}/{num_relu}')
-        extract_features(L=i+1)
+        extract_features(L=i+1, train_loader, test_loader)
     # Save results
     np.save(f'{savename}_threshold_all_noaug{n_steps}.npy', thresholds_all)
     np.save(f'{savename}_threshold_pos_all_noaug{n_steps}.npy', thresholds_pos_all)

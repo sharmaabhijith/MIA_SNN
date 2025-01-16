@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 from spiking_layer_ours import *
 from Models import modelpool
-from Preprocess import datapool, get_dataloader_from_dataset, load_dataset, split_dataset
+from Preprocess import get_dataloader_from_dataset, load_dataset
 from torchvision.models.feature_extraction import create_feature_extractor
 import os
 import argparse
@@ -17,6 +17,7 @@ import time
 import sys
 import calc_th_with_c as ft
 from copy import deepcopy
+import pickle
 from utils import *
 
 
@@ -108,8 +109,10 @@ def train_snn(train_dataloader, test_loader, model, n_steps, epochs, optimizer,
 
         test_loss, test_acc = test_snn(model, test_loader, n_steps, loss_fn, device)
         if best_acc <= test_acc:
-            save_path = f"{savename}_snn_T{n_steps}.pth"
-            torch.save(model.state_dict(), save_path)
+            save_path = f"{savename}_snn_T{n_steps}"
+            torch.save(model.state_dict(), save_path + ".pth")
+            with open(save_path + ".pkl", "wb") as f:
+                pickle.dump(model.state_dict(), f)
             best_acc = test_acc
             best_epoch = epoch
             logger.info(f"New Best Accuracy: {best_acc:.2f}% at Epoch {best_epoch+1}. Model saved to {save_path}.")
@@ -174,13 +177,15 @@ for model_idx in range(1, args.reference_models+1):
         logger.info("Loading dataset...")
         dataset = load_dataset(args.dataset, logger)
         try:
-            with open(os.path.join(primary_log_path,"data_splits.pkl"), 'rb') as file:
+            data_split_file = os.path.join(primary_model_path, "data_splits.pkl")
+            with open(data_split_file, 'rb') as file:
                 data_split_info = pickle.load(file)
+            logger.info("Data split information successfully loaded:")
         except FileNotFoundError:
-            logging.info(f"data_splits.pkl not found in: {primary_log_path}")
+            logger.info(f"Error: The file '{data_split_file}' does not exist")
     # Creating dataloader
-    train_idxs = data_split_info[model_idx]["train"]
-    test_idxs = data_split_info[model_idx]["test"]
+    train_idxs = data_split_info[model_idx-1]["train"]
+    test_idxs = data_split_info[model_idx-1]["test"]
     logger.info(
         f"Training model {model_idx}: Train size {len(train_idxs)}, Test size {len(test_idxs)}"
     )

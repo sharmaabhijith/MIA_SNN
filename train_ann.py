@@ -12,7 +12,6 @@ import os
 import argparse
 from funcs import *  # Import additional custom functions
 import numpy as np
-import math
 import time
 import pickle
 import logging
@@ -81,7 +80,7 @@ for model_idx in range(1, args.reference_models+1):
         logger.info("Loading dataset...")
         dataset = load_dataset(args.dataset, logger)
         data_split_info, memberships = split_dataset(len(dataset), args.reference_models)
-        pickle.dump(data_split_info, open(os.path.join(primary_log_path,"data_splits.pkl"), "wb"))
+        pickle.dump(data_split_info, open(os.path.join(primary_model_path, "data_splits.pkl"), "wb"))
     # Creating dataloader
     train_idxs = data_split_info[model_idx-1]["train"]
     test_idxs = data_split_info[model_idx-1]["test"]
