@@ -9,7 +9,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
-from getdataloader import CIFAR10Policy
+from .getdataloader import CIFAR10Policy
 
 
 def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
@@ -124,7 +124,7 @@ def split_dataset_for_training(dataset_size, num_reference_models):
     num_splits = math.ceil(num_reference_models/2) + 1 # Extra 1 for the target model
     master_keep = np.full((2*num_splits, dataset_size), True, dtype=bool)
 
-    for i in range(num_reference_models):
+    for i in range(num_splits):
         np.random.shuffle(indices)
         master_keep[i * 2, indices[split_index:]] = False
         master_keep[i * 2 + 1, indices[:split_index]] = False

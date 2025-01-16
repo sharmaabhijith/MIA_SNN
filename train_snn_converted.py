@@ -211,14 +211,15 @@ for model_idx in range(1, args.reference_models+1):
     model.to(device)
 
     # Setting up optimizer
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd)
-    para1, para2, para3 = regular_set(model)
-    optimizer = torch.optim.SGD([
-                                {'params': para1, 'weight_decay': args.wd},
-                                {'params': para2, 'weight_decay': args.wd},
-                                {'params': para3, 'weight_decay': args.wd}
-                                ],
-                                lr=args.lr, momentum=0.9)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
+    #optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd)
+    #para1, para2, para3 = regular_set(model)
+    #optimizer = torch.optim.SGD([
+    #                            {'params': para1, 'weight_decay': args.wd},
+    #                            {'params': para2, 'weight_decay': args.wd},
+    #                            {'params': para3, 'weight_decay': args.wd}
+    #                            ],
+    #                            lr=args.lr, momentum=0.9)
     if args.constant_lr:
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=1)
     else:
