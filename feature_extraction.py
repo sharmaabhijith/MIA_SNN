@@ -3,6 +3,7 @@ import torch.nn as nn
 from spiking_layer_ours import *
 from Models import modelpool
 from Preprocess import datapool, get_dataloader_from_dataset, load_dataset
+from torch.utils.data import Subset
 import os
 import argparse
 from funcs import *
@@ -15,7 +16,7 @@ import logging
 import pickle
 from datetime import datetime
 
-def extract_features(L=2, train_loader, test_loader):
+def extract_features(train_loader, test_loader, L=2):
     logger.info(f'Extracting features for layer L={L}, n_steps={n_steps}')
     
     with torch.no_grad():
@@ -156,7 +157,7 @@ for model_idx in range(1, args.reference_models+1):
     thresholds_pos_all = np.zeros((num_relu, n_steps*2))
     for i in range(num_relu):
         logger.info(f'Processing ReLU layer {i+1}/{num_relu}')
-        extract_features(L=i+1, train_loader, test_loader)
+        extract_features(train_loader, test_loader, i+1)
     # Save results
     np.save(f'{savename}_threshold_all_noaug{n_steps}.npy', thresholds_all)
     np.save(f'{savename}_threshold_pos_all_noaug{n_steps}.npy', thresholds_pos_all)

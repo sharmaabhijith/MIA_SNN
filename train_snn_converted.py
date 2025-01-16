@@ -9,6 +9,7 @@ from spiking_layer_ours import *
 from Models import modelpool
 from Preprocess import get_dataloader_from_dataset, load_dataset
 from torchvision.models.feature_extraction import create_feature_extractor
+from torch.utils.data import Subset
 import os
 import argparse
 from funcs import *
