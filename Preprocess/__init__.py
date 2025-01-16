@@ -26,7 +26,7 @@ def split_dataset(dataset_size: int, num_reference_models: int):
 def get_dataloader_from_dataset(
     dataset: torchvision.datasets,
     batch_size: int,
-    shuffle: bool = True,
+    train: bool,
 ) -> DataLoader:
     """
     Function to get DataLoader.
@@ -34,11 +34,15 @@ def get_dataloader_from_dataset(
     Args:
         dataset (torchvision.datasets): The whole dataset.
         batch_size (int): Batch size for getting signals.
-        shuffle (bool): Whether to shuffle dataset or not.
-
+        train (bool): Whether loader is for training or testing
     Returns:
         DataLoader: DataLoader object.
     """
     repeated_data = InfinitelyIndexableDataset(dataset)
-    return DataLoader(repeated_data, batch_size=batch_size, shuffle=shuffle, num_workers=2)
+    if train:
+        train_transformed_data = TransformDataset(repeated_data, train)
+        return DataLoader(train_transformed_data, batch_size=batch_size, shuffle=True, num_workers=2)
+    else:
+        test_transformed_data = TransformDataset(repeated_data, train)
+        return DataLoader(test_transformed_data, batch_size=batch_size, shuffle=False, num_workers=2)
 

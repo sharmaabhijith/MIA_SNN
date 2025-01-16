@@ -145,7 +145,7 @@ def split_dataset_for_training(dataset_size, num_reference_models):
             }
         )
 
-    return data_splits, master_keep
+    return data_splits
 
 
 class TransformDataset(Dataset):
