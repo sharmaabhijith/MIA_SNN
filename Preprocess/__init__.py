@@ -45,4 +45,3 @@ def get_dataloader_from_dataset(
     else:
         test_transformed_data = TransformDataset(repeated_data, train)
         return DataLoader(test_transformed_data, batch_size=batch_size, shuffle=False, num_workers=2)
-
