@@ -141,7 +141,7 @@ args = parser.parse_args()
 
 # Check device configuration and set accordingly
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+batch_size = 256
 n_steps = args.t
 
 # Creating directory to save trained models and their logs
@@ -193,10 +193,7 @@ for model_idx in range(1, args.reference_models+1):
     logger.info("Creating dataloader...")
     train_loader = get_dataloader_from_dataset(Subset(dataset, train_idxs), batch_size=batch_size, shuffle=True)
     test_loader = get_dataloader_from_dataset(Subset(dataset, test_idxs), batch_size=batch_size)
-    logger.info(
-        f"Dataset loaded successfully. Training batches: {len(train_loader)}, 
-        Test batches: {len(test_loader)}"
-    )
+    logger.info(f"Dataset loaded successfully. Training batches: {len(train_loader)}, Test batches: {len(test_loader)}")
     # Define the loss function
     criterion = nn.CrossEntropyLoss()
     # Load the specified model from the model pool
