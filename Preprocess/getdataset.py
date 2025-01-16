@@ -9,6 +9,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
+from getdataloader import CIFAR10Policy
 
 
 def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
@@ -36,7 +37,6 @@ def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
             transform = transforms.Compose(
                 [
                     transforms.ToTensor(),
-                    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
                 ]
             )
             all_data = torchvision.datasets.CIFAR10(
@@ -121,8 +121,8 @@ def split_dataset_for_training(dataset_size, num_reference_models):
     data_splits = []
     indices = np.arange(dataset_size)
     split_index = len(indices) // 2
-    num_reference_models = math.ceil(num_reference_models/2)
-    master_keep = np.full((2*num_reference_models, dataset_size), True, dtype=bool)
+    num_splits = math.ceil(num_reference_models/2) + 1 # Extra 1 for the target model
+    master_keep = np.full((2*num_splits, dataset_size), True, dtype=bool)
 
     for i in range(num_reference_models):
         np.random.shuffle(indices)
@@ -146,3 +146,48 @@ def split_dataset_for_training(dataset_size, num_reference_models):
 
     return data_splits, master_keep
 
+
+class TransformDataset(Dataset):
+    def __init__(self, dataset, train=True):
+        """
+        Args:
+            dataset (Dataset): Existing PyTorch dataset with data and labels.
+            train (callable, optional): Whether to transform train or test data
+        """
+        self.dataset = dataset
+        self.train = train
+
+    def __len__(self):
+        return len(self.dataset)
+
+    @staticmethod
+    def train_transform():
+        """Return train transformations."""
+        return transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            CIFAR10Policy(),  # Assuming CIFAR10Policy is defined elsewhere
+            ToTensor(),
+            Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            Cutout(n_holes=1, length=16)  # Assuming Cutout is defined elsewhere
+        ])
+
+    @staticmethod
+    def test_transform():
+        """Return test transformations."""
+        return transforms.Compose([
+            ToTensor(),
+            Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        ])
+
+    def __getitem__(self, idx):
+        # Get data and label from the original dataset
+        data, label = self.dataset[idx]
+        # Apply transformation to the data
+        if self.train:
+            data = TransformDataset.train_transform(data)
+        else:
+            data = TransformDataset.test_transform(data)
+        
+        return data, label
+    

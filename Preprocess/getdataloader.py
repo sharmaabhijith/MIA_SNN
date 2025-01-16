@@ -511,6 +511,3 @@ def GetFashion(batch_size, num_workers,shuffle=True):
     test_dataloader = data.DataLoader(testset, batch_size, shuffle=False, num_workers=num_workers,drop_last=False)
     
     return train_dataloader, test_dataloader
-    
-    
-
