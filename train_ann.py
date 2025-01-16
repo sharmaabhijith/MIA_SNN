@@ -29,9 +29,9 @@ parser.add_argument('--model', default='vgg16', type=str, help='Model name',
                              'vgg11', 'vgg13', 'vgg16', 'vgg19', 'vgg16_normed', 'alexnet',
                              'resnet18', 'resnet19', 'resnet20', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'cifarnet'])
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory for saving models')
-parser.add_argument('--lr', default=0.001, type=float, help='Learning rate')
-parser.add_argument('--wd', default=0, type=float, help='Weight decay')
-parser.add_argument('--epochs', default=50, type=int)
+parser.add_argument('--lr', default=0.1, type=float, help='Learning rate')
+parser.add_argument('--wd', default=5e-4, type=float, help='Weight decay')
+parser.add_argument('--epochs', default=100, type=int)
 parser.add_argument('--reference_models', default=4, type=int, help='Number of reference models')
 
 args = parser.parse_args()
@@ -50,7 +50,8 @@ batch_size = 256
 primary_model_path = os.path.join(args.checkpoint, args.dataset, args.model, f"ref_models_{args.reference_models}")
 primary_log_path = os.path.join("logs", args.dataset, args.model, f"ref_models_{args.reference_models}")
 
-for model_idx in range(1, args.reference_models+1):
+for model_idx in range(0, args.reference_models+1):
+    # Model created with idx 0 is always the target model
     # Create model dir
     full_model_path = os.path.join(primary_model_path, f"model_{model_idx}")
     if os.path.exists(full_model_path) is False:
@@ -75,15 +76,16 @@ for model_idx in range(1, args.reference_models+1):
     logger.info("Starting ANN Training")
     logger.info(f"Arguments: {args}")
     logger.info(f"Device: {'GPU' if torch.cuda.is_available() else 'CPU'}")
-    if model_idx==1:
+    if model_idx==0:
         # Load the dataset using the specified parameters
         logger.info("Loading dataset...")
         dataset = load_dataset(args.dataset, logger)
-        data_split_info, memberships = split_dataset(len(dataset), args.reference_models)
+        data_split_info = split_dataset(len(dataset), args.reference_models)
+        logger.info(f"Total datasets (train-test pairs): {len(data_split_info)}. Assert should be target + reference models: {1 + args.reference_models}")
         pickle.dump(data_split_info, open(os.path.join(primary_model_path, "data_splits.pkl"), "wb"))
     # Creating dataloader
-    train_idxs = data_split_info[model_idx-1]["train"]
-    test_idxs = data_split_info[model_idx-1]["test"]
+    train_idxs = data_split_info[model_idx]["train"]
+    test_idxs = data_split_info[model_idx]["test"]
     logger.info(
         f"Training model {model_idx}: Train size {len(train_idxs)}, Test size {len(test_idxs)}"
     )

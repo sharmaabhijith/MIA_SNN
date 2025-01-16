@@ -122,12 +122,11 @@ def split_dataset_for_training(dataset_size, num_reference_models):
     indices = np.arange(dataset_size)
     split_index = len(indices) // 2
     num_splits = math.ceil(num_reference_models/2) + 1 # Extra 1 for the target model
-    master_keep = np.full((2*num_splits, dataset_size), True, dtype=bool)
+    master_keep = np.full((2*num_splits - 1, dataset_size), True, dtype=bool)
 
     for i in range(num_splits):
         np.random.shuffle(indices)
         master_keep[i * 2, indices[split_index:]] = False
-        master_keep[i * 2 + 1, indices[:split_index]] = False
         keep = master_keep[i * 2, :]
         train_indices = np.where(keep)[0]
         test_indices = np.where(~keep)[0]
@@ -137,6 +136,8 @@ def split_dataset_for_training(dataset_size, num_reference_models):
                 "test": test_indices,
             }
         )
+        if i==0:
+            continue
         data_splits.append(
             {
                 "train": test_indices,

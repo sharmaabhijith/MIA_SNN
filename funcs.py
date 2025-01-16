@@ -50,7 +50,7 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
     model.cuda(device)
     para1, para2, para3 = regular_set(model)
     
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    #optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 	#optimizer = torch.optim.SGD
     #(
     #        [
@@ -62,13 +62,7 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
     #        momentum=0.1
 	#)
 	
-    # optimizer = torch.optim.SGD(
-    #         [
-    #             {'params': para1, 'weight_decay': wd}, {'params': para2, 'weight_decay': wd}, {'params': para3, 'weight_decay': wd}
-    #         ], 
-    #         lr=lr, 
-    #         momentum=0.9
-    #     )
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.1)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     
     best_acc = 0

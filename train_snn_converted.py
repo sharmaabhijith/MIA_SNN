@@ -148,7 +148,8 @@ n_steps = args.t
 primary_model_path = os.path.join(args.checkpoint, args.dataset, args.model, f"ref_models_{args.reference_models}")
 primary_log_path = os.path.join("logs", args.dataset, args.model, f"ref_models_{args.reference_models}")
 
-for model_idx in range(1, args.reference_models+1):
+for model_idx in range(0, args.reference_models+1):
+    # Model created with idx 0 is always the target model
     # Create model dir
     full_model_path = os.path.join(primary_model_path, f"model_{model_idx}")
     if os.path.exists(full_model_path) is False:
@@ -173,7 +174,7 @@ for model_idx in range(1, args.reference_models+1):
     logger.info("Starting SNN calibration")
     logger.info(f"Arguments: {args}")
     logger.info(f"Device: {'GPU' if torch.cuda.is_available() else 'CPU'}")
-    if model_idx==1:
+    if model_idx==0:
         # Load the dataset using the specified parameters
         logger.info("Loading dataset...")
         dataset = load_dataset(args.dataset, logger)
@@ -185,14 +186,14 @@ for model_idx in range(1, args.reference_models+1):
         except FileNotFoundError:
             logger.info(f"Error: The file '{data_split_file}' does not exist")
     # Creating dataloader
-    train_idxs = data_split_info[model_idx-1]["train"]
-    test_idxs = data_split_info[model_idx-1]["test"]
+    train_idxs = data_split_info[model_idx]["train"]
+    test_idxs = data_split_info[model_idx]["test"]
     logger.info(
         f"Training model {model_idx}: Train size {len(train_idxs)}, Test size {len(test_idxs)}"
     )
     logger.info("Creating dataloader...")
-    train_loader = get_dataloader_from_dataset(Subset(dataset, train_idxs), batch_size=batch_size, shuffle=True)
-    test_loader = get_dataloader_from_dataset(Subset(dataset, test_idxs), batch_size=batch_size)
+    train_loader = get_dataloader_from_dataset(Subset(dataset, train_idxs), batch_size=batch_size, train=True)
+    test_loader = get_dataloader_from_dataset(Subset(dataset, test_idxs), batch_size=batch_size, train=False)
     logger.info(f"Dataset loaded successfully. Training batches: {len(train_loader)}, Test batches: {len(test_loader)}")
     # Define the loss function
     criterion = nn.CrossEntropyLoss()
