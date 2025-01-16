@@ -161,34 +161,27 @@ class TransformDataset(Dataset):
     def __len__(self):
         return len(self.dataset)
 
-    @staticmethod
-    def train_transform():
-        """Return train transformations."""
-        return transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            CIFAR10Policy(),  # Assuming CIFAR10Policy is defined elsewhere
-            ToTensor(),
-            Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-            Cutout(n_holes=1, length=16)  # Assuming Cutout is defined elsewhere
-        ])
-
-    @staticmethod
-    def test_transform():
-        """Return test transformations."""
-        return transforms.Compose([
-            ToTensor(),
-            Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-        ])
-
     def __getitem__(self, idx):
         # Get data and label from the original dataset
         data, label = self.dataset[idx]
         # Apply transformation to the data
+        train_transform = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            # Add Cutout or other custom transforms if needed
+        ])
+
+        test_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        ])
+
         if self.train:
-            data = TransformDataset.train_transform(data)
+            data = train_transform(data)
         else:
-            data = TransformDataset.test_transform(data)
+            data = test_transform(data)
         
         return data, label
     
