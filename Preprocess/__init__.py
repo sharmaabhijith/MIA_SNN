@@ -39,9 +39,7 @@ def get_dataloader_from_dataset(
         DataLoader: DataLoader object.
     """
     repeated_data = InfinitelyIndexableDataset(dataset)
-    if train:
-        train_transformed_data = TransformDataset(repeated_data, train)
-        return DataLoader(train_transformed_data, batch_size=batch_size, shuffle=True, num_workers=2)
+    if train==True:
+        return DataLoader(TransformDataset(repeated_data, train), batch_size=batch_size, shuffle=True, num_workers=2)
     else:
-        test_transformed_data = TransformDataset(repeated_data, train)
-        return DataLoader(test_transformed_data, batch_size=batch_size, shuffle=False, num_workers=2)
+        return DataLoader(TransformDataset(repeated_data, train), batch_size=batch_size, shuffle=False, num_workers=2)
