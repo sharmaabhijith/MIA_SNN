@@ -140,6 +140,7 @@ parser.add_argument('--reference_models', default=4, type=int, help='Number of r
 args = parser.parse_args()
 
 # Check device configuration and set accordingly
+torch.cuda.empty_cache()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size = 256
 n_steps = args.t
@@ -212,10 +213,11 @@ for model_idx in range(0, args.reference_models+1):
     model.to(device)
 
     # Setting up optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
-    #optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd)
-    #para1, para2, para3 = regular_set(model)
-    #optimizer = torch.optim.SGD([
+    # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd)
+    # para1, para2, para3 = regular_set(model)
+    # optimizer = torch.optim.SGD([
     #                            {'params': para1, 'weight_decay': args.wd},
     #                            {'params': para2, 'weight_decay': args.wd},
     #                            {'params': para3, 'weight_decay': args.wd}
@@ -238,4 +240,8 @@ for model_idx in range(0, args.reference_models+1):
     test_loss, test_acc = test_snn(model, test_loader, n_steps, criterion, device)
     logger.info(f"Final Accuracy: {test_acc:.2f}%")
 
+    # Refresh memory
+    del model
+    torch.cuda.empty_cache()
     GlobalLogger.reset_logger()
+
