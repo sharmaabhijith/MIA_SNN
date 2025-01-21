@@ -29,7 +29,7 @@ parser.add_argument('--model', default='vgg16', type=str, help='Model name',
                              'vgg11', 'vgg13', 'vgg16', 'vgg19', 'vgg16_normed', 'alexnet',
                              'resnet18', 'resnet19', 'resnet20', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'cifarnet'])
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory for saving models')
-parser.add_argument('--lr', default=0.1, type=float, help='Learning rate')
+parser.add_argument('--lr', default=0.02, type=float, help='Learning rate')
 parser.add_argument('--wd', default=5e-4, type=float, help='Weight decay')
 parser.add_argument('--epochs', default=64, type=int)
 parser.add_argument('--reference_models', default=4, type=int, help='Number of reference models')
@@ -91,8 +91,8 @@ for model_idx in range(0, args.reference_models+1):
         f"Training model {model_idx}: Train size {len(train_idxs)}, Test size {len(test_idxs)}"
     )
     logger.info("Creating dataloader...")
-    train_loader = get_dataloader_from_dataset(Subset(dataset, train_idxs), batch_size=batch_size, train=True)
-    test_loader = get_dataloader_from_dataset(Subset(dataset, test_idxs), batch_size=batch_size, train=False)
+    train_loader = get_dataloader_from_dataset(args.dataset, Subset(dataset, train_idxs), batch_size=batch_size, train=True)
+    test_loader = get_dataloader_from_dataset(args.dataset, Subset(dataset, test_idxs), batch_size=batch_size, train=False)
     logger.info(f"Dataset loaded successfully. Training batches: {len(train_loader)}, Test batches: {len(test_loader)}")
     # Load the specified model from the model pool
     logger.info(f"Loading model: {args.model} for dataset: {args.dataset}")

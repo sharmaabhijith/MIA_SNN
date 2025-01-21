@@ -140,8 +140,8 @@ for model_idx in range(0, args.reference_models+1):
         f"Training model {model_idx}: Train size {len(train_idxs)}, Test size {len(test_idxs)}"
     )
     logger.info("Creating dataloader...")
-    train_loader = get_dataloader_from_dataset(Subset(dataset, train_idxs), batch_size=batch_size, train=True)
-    test_loader = get_dataloader_from_dataset(Subset(dataset, test_idxs), batch_size=batch_size, train=False)
+    train_loader = get_dataloader_from_dataset(args.dataset, Subset(dataset, train_idxs), batch_size=batch_size, train=True)
+    test_loader = get_dataloader_from_dataset(args.dataset, Subset(dataset, test_idxs), batch_size=batch_size, train=False)
     logger.info(f"Dataset loaded successfully. Training batches: {len(train_loader)}, Test batches: {len(test_loader)}")
     # Load the specified model from the model pool
     logger.info(f"Loading model: {args.model} for dataset: {args.dataset}")

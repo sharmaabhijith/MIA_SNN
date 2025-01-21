@@ -56,7 +56,6 @@ def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
             transform = transforms.Compose(
                 [
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
                 ]
             )
             all_data = torchvision.datasets.CIFAR100(
@@ -72,33 +71,6 @@ def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
             with open(f"{path}.pkl", "wb") as file:
                 pickle.dump(all_data, file)
             logger.info(f"Save data to {path}.pkl")
-        elif dataset == "texas100":
-            if os.path.exists(f"{data_dir}/dataset_texas/feats"):
-                X = (
-                    pd.read_csv(
-                        f"{data_dir}/dataset_texas/feats", header=None, encoding="utf-8"
-                    )
-                    .to_numpy()
-                    .astype(np.float32)
-                )
-                y = (
-                    pd.read_csv(
-                        f"{data_dir}/dataset_texas/labels",
-                        header=None,
-                        encoding="utf-8",
-                    )
-                    .to_numpy()
-                    .reshape(-1)
-                    - 1
-                )
-                all_data = TabularDataset(X, y)
-                with open(f"{path}.pkl", "wb") as file:
-                    pickle.dump(all_data, file)
-                logger.info(f"Save data to {path}.pkl")
-            else:
-                raise NotImplementedError(
-                    f"{dataset} is not installed correctly in {data_dir}/dataset_texas"
-                )
         else:
             raise NotImplementedError(f"{dataset} is not implemented")
 
@@ -149,12 +121,13 @@ def split_dataset_for_training(dataset_size, num_reference_models):
 
 
 class TransformDataset(Dataset):
-    def __init__(self, dataset, train=True):
+    def __init__(self, dataset_name, dataset, train=True):
         """
         Args:
             dataset (Dataset): Existing PyTorch dataset with data and labels.
             train (callable, optional): Whether to transform train or test data
         """
+        self.dataset_name = dataset_name
         self.dataset = dataset
         self.train = train
 
@@ -165,20 +138,35 @@ class TransformDataset(Dataset):
         # Get data and label from the original dataset
         data, label = self.dataset[idx]
         # Apply transformation to the data
-        train_transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-            # Add Cutout or other custom transforms if needed
-        ])
-
-        test_transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-        ])
+        if self.dataset_name=="cifar10":
+            train_transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+                # Add Cutout or other custom transforms if needed
+            ])
+            test_transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+            ])
+        elif self.dataset_name=="cifar100":
+            train_transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[n/255. for n in [129.3, 124.1, 112.4]], std=[n/255. for n in [68.2,  65.4,  70.4]]),
+            ])
+            test_transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[n/255. for n in [129.3, 124.1, 112.4]], std=[n/255. for n in [68.2,  65.4,  70.4]]),
+            ])
+        else:
+            print(f"No dataset transform defined for: {dataset_name}")
 
         if self.train:
             data = train_transform(data)

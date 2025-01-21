@@ -4,16 +4,16 @@
 #SBATCH --output=outputs/snn_train_output.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mem=40G
+#SBATCH --mem=60G
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:2
 #SBATCH -p cscc-gpu-p
 #SBATCH --time=12:00:00
 #SBATCH -q cscc-gpu-qos
 
 
 # List of models to train
-MODELS=("vgg16")
+MODELS=("resnet34")
 
 # Dataset
 DATASETS=("cifar10")

@@ -24,6 +24,7 @@ def split_dataset(dataset_size: int, num_reference_models: int):
 
 
 def get_dataloader_from_dataset(
+    dataset_name: str,
     dataset: torchvision.datasets,
     batch_size: int,
     train: bool,
@@ -40,6 +41,8 @@ def get_dataloader_from_dataset(
     """
     repeated_data = InfinitelyIndexableDataset(dataset)
     if train==True:
-        return DataLoader(TransformDataset(repeated_data, train), batch_size=batch_size, shuffle=True, num_workers=2)
+        train_data = TransformDataset(dataset_name, repeated_data, train)
+        return DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=2)
     else:
-        return DataLoader(TransformDataset(repeated_data, train), batch_size=batch_size, shuffle=False, num_workers=2)
+        test_data = TransformDataset(dataset_name, repeated_data, train)
+        return DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=2)

@@ -13,10 +13,10 @@
 
 
 # List of models to train
-MODELS=("vgg16")
+MODELS=("vgg16" "resnet18" "resnet34")
 
 # Dataset
-DATASETS=("cifar10")
+DATASETS=("cifar100")
 
 # Number of reference models in the experiment
 REF_MODELS=(4)
