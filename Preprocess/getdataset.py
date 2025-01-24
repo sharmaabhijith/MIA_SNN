@@ -9,7 +9,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
-from .getdataloader import CIFAR10Policy
+from .getdataloader import CIFAR10Policy, Cutout
 
 
 def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
@@ -157,8 +157,10 @@ class TransformDataset(Dataset):
                 transforms.ToPILImage(),
                 transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(),
+                CIFAR10Policy(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[n/255. for n in [129.3, 124.1, 112.4]], std=[n/255. for n in [68.2,  65.4,  70.4]]),
+                Cutout(n_holes=1, length=8)
             ])
             test_transform = transforms.Compose([
                 transforms.ToPILImage(),

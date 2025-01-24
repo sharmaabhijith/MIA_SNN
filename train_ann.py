@@ -29,7 +29,7 @@ parser.add_argument('--model', default='vgg16', type=str, help='Model name',
                              'vgg11', 'vgg13', 'vgg16', 'vgg19', 'vgg16_normed', 'alexnet',
                              'resnet18', 'resnet19', 'resnet20', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'cifarnet'])
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory for saving models')
-parser.add_argument('--lr', default=0.02, type=float, help='Learning rate')
+parser.add_argument('--lr', default=0.1, type=float, help='Learning rate')
 parser.add_argument('--wd', default=5e-4, type=float, help='Weight decay')
 parser.add_argument('--epochs', default=64, type=int)
 parser.add_argument('--reference_models', default=4, type=int, help='Number of reference models')
