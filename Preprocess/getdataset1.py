@@ -9,7 +9,6 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
-from torchvision.datasets import ImageFolder, CIFAR10, CIFAR100
 from .getdataloader import CIFAR10Policy, Cutout
 
 
@@ -28,63 +27,54 @@ def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
     Returns:
         Any: Loaded dataset.
     """
-    data_path = f"datasets/{dataset}"
-    if os.path.exists(f"{data_path}.pkl"):
-        with open(f"{data_path}.pkl", "rb") as file:
+    path = f"datasets/{dataset}"
+    if os.path.exists(f"{path}.pkl"):
+        with open(f"{path}.pkl", "rb") as file:
             all_data = pickle.load(file)
-        if logger:
-            logger.info(f"Load data from {data_path}.pkl")
-        else:
-            print(f"Load data from {data_path}.pkl")
+        logger.info(f"Load data from {path}.pkl")
     else:
         if dataset == "cifar10":
-            transform = transforms.Compose([transforms.ToTensor()])
-            all_data = CIFAR10(root=data_path, train=True, download=True, transform=transform)
-            test_data = CIFAR10(root=data_path, train=False, download=True, transform=transform)
+            transform = transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                ]
+            )
+            all_data = torchvision.datasets.CIFAR10(
+                root=path, train=True, download=True, transform=transform
+            )
+            test_data = torchvision.datasets.CIFAR10(
+                root=path, train=False, download=True, transform=transform
+            )
             all_features = np.concatenate([all_data.data, test_data.data], axis=0)
             all_targets = np.concatenate([all_data.targets, test_data.targets], axis=0)
             all_data.data = all_features
             all_data.targets = all_targets
-            with open(f"{data_path}.pkl", "wb") as file:
+            with open(f"{path}.pkl", "wb") as file:
                 pickle.dump(all_data, file)
-            if logger:
-                logger.info(f"Save data to {data_path}.pkl")
-            else:
-                print(f"Save data to {data_path}.pkl")
+            logger.info(f"Save data to {path}.pkl")
         elif dataset == "cifar100":
-            transform = transforms.Compose([transforms.ToTensor()])
-            all_data = CIFAR100(root=data_path, train=True, download=True, transform=transform)
-            test_data = CIFAR100(root=data_path, train=False, download=True, transform=transform)
+            transform = transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                ]
+            )
+            all_data = torchvision.datasets.CIFAR100(
+                root=path, train=True, download=True, transform=transform
+            )
+            test_data = torchvision.datasets.CIFAR100(
+                root=path, train=False, download=True, transform=transform
+            )
             all_features = np.concatenate([all_data.data, test_data.data], axis=0)
             all_targets = np.concatenate([all_data.targets, test_data.targets], axis=0)
             all_data.data = all_features
             all_data.targets = all_targets
-            with open(f"{data_path}.pkl", "wb") as file:
+            with open(f"{path}.pkl", "wb") as file:
                 pickle.dump(all_data, file)
-            if logger:
-                logger.info(f"Save data to {data_path}.pkl")
-            else:
-                print(f"Save data to {data_path}.pkl")
-        elif dataset in ("imagenette", "imagewoof"):
-            transform = transforms.Compose([transforms.ToTensor()])
-            all_data = ImageFolder(os.path.join(data_path, "train"), transform=transform)
-            test_data = ImageFolder(os.path.join(data_path, "test"), transform=transform)
-            all_features = np.concatenate([all_data.samples, test_data.samples], axis=0)
-            all_targets = np.concatenate([all_data.targets, test_data.targets], axis=0)
-            all_data.data = all_features
-            all_data.targets = all_targets
-            with open(f"{data_path}.pkl", "wb") as file:
-                pickle.dump(all_data, file)
-            if logger:
-                logger.info(f"Save data to {data_path}.pkl")
-            else:
-                print(f"Save data to {data_path}.pkl")
+            logger.info(f"Save data to {path}.pkl")
         else:
             raise NotImplementedError(f"{dataset} is not implemented")
-    if logger:
-        logger.info(f"The whole dataset size: {len(all_data)}")
-    else:
-        print(f"The whole dataset size: {len(all_data)}")
+
+    logger.info(f"The whole dataset size: {len(all_data)}")
     return all_data
 
 
@@ -177,22 +167,8 @@ class TransformDataset(Dataset):
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[n/255. for n in [129.3, 124.1, 112.4]], std=[n/255. for n in [68.2,  65.4,  70.4]]),
             ])
-        elif self.dataset_name in ("imagenette", "imagewoof"):
-            train_transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.RandomHorizontalFlip(),
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-            ])
-            test_transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-            ])
         else:
-            print(f"No dataset transform defined for: {self.dataset_name}")
+            print(f"No dataset transform defined for: {dataset_name}")
 
         if self.train:
             data = train_transform(data)
@@ -201,4 +177,3 @@ class TransformDataset(Dataset):
         
         return data, label
     
-

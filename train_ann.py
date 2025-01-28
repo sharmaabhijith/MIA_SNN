@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(description='PyTorch ANN-SNN Conversion')
 # Define arguments for model parameters and settings
 parser.add_argument('--t', default=300, type=int, help='T Latency length (Simulation time-steps)')
 parser.add_argument('--dataset', default='cifar10', type=str, help='Dataset name',
-                    choices=['cifar10', 'cifar100', 'tiny-imagenet', 'imagenet', 'fashion'])
+                    choices=['cifar10', 'cifar100', 'tiny-imagenet', 'imagenette', 'imagewoof', 'fashion'])
 parser.add_argument('--model', default='vgg16', type=str, help='Model name',
                     choices=['small', 'vgg16', 'resnet18', 'resnet20', 'vgg16_no_bn',
                              'vgg11', 'vgg13', 'vgg16', 'vgg19', 'vgg16_normed', 'alexnet',
