@@ -1,0 +1,6 @@
+saved_models/
+datasets/
+*.pth
+*.log
+*.npy
+*.pyc
