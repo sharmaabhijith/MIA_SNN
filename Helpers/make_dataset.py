@@ -1,11 +1,14 @@
 import os
 import sys
-sys.path.append("../")
+import numpy as np
 import requests
 import tarfile
+import urllib.request
 
 
-DATASET_NAME = "imagenette"
+sys.path.append("../")
+
+DATASET_NAME = "imagenewoof"
 ROOT_DIR = "../dataset"
 DATA_DIR = os.path.join(ROOT_DIR, DATASET_NAME)
 RAW_DATA_DIR = os.path.join(ROOT_DIR, f"{DATASET_NAME}2")
