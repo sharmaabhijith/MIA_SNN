@@ -1,6 +1,7 @@
 import os
 import sys
-import glob
+import shutil
+from glob import glob
 import numpy as np
 import requests
 import tarfile
@@ -15,7 +16,6 @@ ROOT_DIR = os.path.join(main_path, "datasets")
 DATA_DIR = os.path.join(ROOT_DIR, DATASET_NAME)
 RAW_DATA_DIR = os.path.join(ROOT_DIR, f"{DATASET_NAME}2")
 SPLITS = ["train", "test"]
-print(sys.path)
 
 def retrieve_data(DATASET_NAME, ROOT_DIR, url):
     output_file = os.path.join(ROOT_DIR, f"{DATASET_NAME}2.tgz")
@@ -37,6 +37,8 @@ def retrieve_data(DATASET_NAME, ROOT_DIR, url):
             with tarfile.open(output_file, "r:gz") as tar:
                 tar.extractall(path=ROOT_DIR)
             print(f"Extracted files to {ROOT_DIR}")
+        else:
+            print(f"Extracted file already present at {ROOT_DIR}")
 
 
 if DATASET_NAME=="imagenette":
@@ -57,7 +59,7 @@ retrieve_data(DATASET_NAME, ROOT_DIR, url)
 train_folders = sorted(glob(os.path.join(RAW_DATA_DIR, "train", "*")))
 
 class_maps = {}
-for i in range(raw_labels):
+for i in range(len(raw_labels)):
     class_maps[raw_labels[i]] = str(i)
 
 class_names = list(class_maps.keys())
@@ -67,25 +69,23 @@ n_classes=len(class_indices)
 assert len(train_folders)==len(class_maps)
 
 for sp in SPLITS:
-  for cls in class_indexes:
-    os.makedirs(os.path.join(DATA_DIR, sp, cls), exist_ok=True)
+    for cls in class_indices:
+        os.makedirs(os.path.join(DATA_DIR, sp, cls), exist_ok=True)
 
 for i, cls_index in enumerate(class_indices):
-  image_paths = np.array(glob(os.path.join(f"{train_folders[class_names[i]]}","*.JPEG")))
-  class_idx = class_indices[i]
-  print(f'{class_idx}: {len(image_paths)}')
-  np.random.shuffle(image_paths)
+    class_idx = class_indices[i]
+    image_paths = np.array(glob(os.path.join(f"{train_folders[int(class_idx)]}","*.JPEG")))
+    class_idx = class_indices[i]
+    print(f'{class_idx}: {len(image_paths)}')
+    np.random.shuffle(image_paths)
+    ds_split = np.split(
+        image_paths, 
+        indices_or_sections=[int(.9*len(image_paths)), int(1*len(image_paths))]
+    )
+    dataset_data = zip(SPLITS, ds_split)
+    for sp, images in dataset_data:
+        for img_path in images:
+            shutil.copy(img_path, os.path.join(DATA_DIR, sp, class_idx))
 
-  ds_split = np.split(
-    image_paths, 
-    indices_or_sections=[int(.9*len(image_paths)), int(1*len(image_paths))]
-  )
-
-  dataset_data = zip(SPLITS, ds_split)
-
-  for sp, images in dataset_data:
-    for img_path in images:
-      shutil.copy(img_path, os.path.join(DATA_DIR, sp, class_idx))
-
-os.remove(os.path.join(RAW_DATA_DIR))
+shutil.rmtree(os.path.join(RAW_DATA_DIR))
 os.remove(os.path.join(ROOT_DIR, f"{DATASET_NAME}2.tgz"))
