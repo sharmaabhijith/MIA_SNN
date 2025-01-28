@@ -1,19 +1,21 @@
 import os
 import sys
+import glob
 import numpy as np
 import requests
 import tarfile
 import urllib.request
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+main_path = os.path.join(current_dir, "../")     
+sys.path.append(main_path)
 
-sys.path.append("../")
-
-DATASET_NAME = "imagenewoof"
-ROOT_DIR = "../dataset"
+DATASET_NAME = "imagewoof"
+ROOT_DIR = os.path.join(main_path, "datasets")
 DATA_DIR = os.path.join(ROOT_DIR, DATASET_NAME)
 RAW_DATA_DIR = os.path.join(ROOT_DIR, f"{DATASET_NAME}2")
 SPLITS = ["train", "test"]
-
+print(sys.path)
 
 def retrieve_data(DATASET_NAME, ROOT_DIR, url):
     output_file = os.path.join(ROOT_DIR, f"{DATASET_NAME}2.tgz")
@@ -22,6 +24,7 @@ def retrieve_data(DATASET_NAME, ROOT_DIR, url):
         print(f"Dataset already present at : {ROOT_DIR}")
     else:
         if not os.path.exists(output_file):
+            print("Downloading dataset ...")
             response = requests.get(url, stream=True)
             if response.status_code == 200:
                 with open(output_file, "wb") as file:
@@ -68,7 +71,7 @@ for sp in SPLITS:
     os.makedirs(os.path.join(DATA_DIR, sp, cls), exist_ok=True)
 
 for i, cls_index in enumerate(class_indices):
-  image_paths = np.array(glob(os.path.join(f"{train_folders[class_names[i]]}","*.JPEG"))
+  image_paths = np.array(glob(os.path.join(f"{train_folders[class_names[i]]}","*.JPEG")))
   class_idx = class_indices[i]
   print(f'{class_idx}: {len(image_paths)}')
   np.random.shuffle(image_paths)
