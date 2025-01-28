@@ -1,6 +1,8 @@
 saved_models/
 datasets/
+outputs/
 *.pth
 *.log
 *.npy
 *.pyc
+__pycache__/
