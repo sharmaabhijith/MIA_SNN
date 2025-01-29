@@ -1,10 +1,25 @@
+import os
+import pickle
 import torch
+import random
+import logging
+import numpy as np
 import torch.nn as nn
+from copy import deepcopy
+from typing import Optional
+from spiking_layer_ours import *
 from torch.nn.parameter import Parameter
 from torch.nn import functional as F
-import logging
-import os
-from typing import Optional
+
+def seed_all(logger, seed=42):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    logger.info(f"Seeds set with seed={seed}")
 
 class GlobalLogger:
     _initialized = False
@@ -54,8 +69,6 @@ def regular_set(model, paras=([],[],[])):
                 #print("paras[1]")
     return paras
 
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class SeqToANNContainer(nn.Module):
     # This code is form spikingjelly https://github.com/fangwei123456/spikingjelly
     def __init__(self, *args):
@@ -154,5 +167,187 @@ def snn_to_ann(model):
         elif module.__class__.__name__ == 'Flatten':
             model._modules[name] = nn.Flatten()
     return model
+
+def isActivation(name):
+    if 'relu' in name.lower():
+        return True
+    return False
+
+
+def replace_activation_by_spike(model, thresholds, thresholds1, n_steps, counter=0):
+    thresholds_new = deepcopy(thresholds)
+    thresholds_new1 = deepcopy(thresholds1)
+
+    for name, module in model._modules.items():
+        if hasattr(module, "_modules"):
+            model._modules[name], counter, thresholds_new = replace_activation_by_spike(module, thresholds_new, thresholds_new1, n_steps, counter)
+        if isActivation(module.__class__.__name__.lower()):
+            thresholds_new[counter, n_steps:] = thresholds_new1[counter, 1] / n_steps
+            thresholds_new[counter, :n_steps] = thresholds_new1[counter, 0] / n_steps
+            model._modules[name] = SPIKE_layer(thresholds_new[counter, n_steps:], thresholds_new[counter, 0:n_steps])
+            counter += 1
+    return model, counter, thresholds_new
+
+
+def ann_to_snn(model, thresholds, thresholds1, n_steps, logger):
+    logger.info("Converting ANN to SNN...")
+    model, counter, thresholds_new = replace_activation_by_spike(model, thresholds, thresholds1, n_steps)
+    model = replace_maxpool2d_by_avgpool2d(model)
+    model = replace_layer_by_tdlayer(model)
+    logger.info("Conversion complete.")
+    return model, thresholds_new
+
+
+def test_snn(model, test_loader, n_steps, criterion, device, logger):
+    logger.info("Testing SNN...")
+    model.eval()
+    with torch.no_grad():
+        correct = 0
+        total = 0
+        loss = 0
+        for images, labels in test_loader:
+            images = add_dimension(images, n_steps)
+            images = images.to(device)
+            labels = labels.to(device)
+
+            outputs = model(images, L=0, t=n_steps)
+            outputs = torch.sum(outputs, 1)
+            _, predicted = torch.max(outputs.data/n_steps, 1)
+            loss += criterion(outputs/n_steps, labels).item()*images.shape[0]
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+        test_loss = loss/total
+        test_acc = 100 * correct / total
+    logger.info(f"SNN Testing Complete. Loss: {test_loss:.4f}, Accuracy: {test_acc:.2f}%")
+    return test_loss, test_acc
+
+
+def train_snn(train_dataloader, test_loader, model, n_steps, epochs, optimizer,
+              scheduler, device, loss_fn, args, savename, logger):
+    logger.info("Starting SNN training...")
+    model.to(device)
+    best_epoch = 0
+    best_acc = 0
+    for epoch in range(epochs):
+        logger.info(f"Epoch {epoch+1}/{epochs}...")
+        model.train()
+        epoch_loss = 0
+        total = 0
+        correct = 0
+
+        for img, label in train_dataloader:
+            img = add_dimension(img, n_steps)
+            img = img.to(device)
+
+            labels = label.to(device)
+            outputs = model(img, L=0, t=n_steps) 
+            outputs = torch.mean(outputs, 1)
+            optimizer.zero_grad()
+            loss = loss_fn(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()*img.shape[0]
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+        
+        logger.info(f"Epoch {epoch+1} - Train Loss: {epoch_loss/total:.4f}, Train Accuracy: {100 * correct / total:.2f}%")
+        scheduler.step()
+
+        test_loss, test_acc = test_snn(model, test_loader, n_steps, loss_fn, device)
+        if best_acc <= test_acc:
+            save_path = f"{savename}_snn_T{n_steps}"
+            torch.save(model.state_dict(), save_path + ".pth")
+            with open(save_path + ".pkl", "wb") as f:
+                pickle.dump(model.state_dict(), f)
+            best_acc = test_acc
+            best_epoch = epoch
+            logger.info(f"New Best Accuracy: {best_acc:.2f}% at Epoch {best_epoch+1}. Model saved to {save_path}.")
+
+    return model
+
+def test_ann(test_dataloader, model, loss_fn, device, logger, rank=0):
+    logger.info("Starting evaluation...")
+    epoch_loss = 0
+    tot = torch.tensor(0.).cuda(device)
+    model.eval()
+    model.cuda(device)
+    length = 0
+    with torch.no_grad():
+        for img, label in test_dataloader:
+            img = img.cuda(device)
+            label = label.cuda(device)
+            out = model(img)
+            loss = loss_fn(out, label)
+            epoch_loss += loss.item()
+            length += len(label)    
+            tot += (label == out.max(1)[1]).sum().data
+    
+    accuracy = tot / length
+    avg_loss = epoch_loss / length
+    logger.info(f"Evaluation completed. Accuracy: {accuracy:.4f}, Loss: {avg_loss:.4f}")
+    return accuracy, avg_loss
+
+def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn, logger, lr=0.1, wd=5e-4, save=None, rank=0):
+    os.makedirs(os.path.dirname(save), exist_ok=True)
+    logger.info("Starting training...")
+    logger.info(f"Parameters: epochs={epochs}, learning_rate={lr}, weight_decay={wd}")
+
+    model.cuda(device)
+    para1, para2, para3 = regular_set(model)
+    
+    #optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+	#optimizer = torch.optim.SGD
+    #(
+    #        [
+    #            {'params': para1, 'weight_decay': wd}, 
+    #            {'params': para2, 'weight_decay': wd}, 
+    #            {'params': para3, 'weight_decay': wd}
+    #        ],
+    #        lr=lr, 
+    #        momentum=0.1
+	#)
+	
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+    
+    best_acc = 0
+    for epoch in range(epochs):
+        total = torch.tensor(0.).cuda(device)
+        epoch_loss = 0
+        length = 0
+        model.train()
+        logger.info(f"Epoch {epoch + 1}/{epochs} starting...")
+        for img, label in tqdm(train_dataloader, desc=f"Epoch {epoch + 1} Progress", leave=False):
+            img = img.cuda(device)
+            label = label.cuda(device)
+            optimizer.zero_grad()
+            out = model(img)
+            loss = loss_fn(out, label)
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+            length += len(label)
+            total += (label==out.max(1)[1]).sum().data
+
+        train_acc = total / length
+        train_loss = epoch_loss / length
+        tmp_acc, val_loss = test_ann(test_dataloader, model, loss_fn, device, logger, rank)
+        
+        logger.info(f"Epoch {epoch + 1} -> Training Accuracy: {train_acc:.4f}, Validation Accuracy: {tmp_acc:.4f}")
+
+        if tmp_acc >= best_acc:
+            torch.save(model.state_dict(), save + '.pth')
+            with open(save + ".pkl", "wb") as f:
+                pickle.dump(model.state_dict(), f)
+            best_acc = tmp_acc
+            logger.info(f"New best model saved with accuracy: {best_acc:.4f}")
+
+        scheduler.step()
+    
+    logger.info(f"Training completed. Best accuracy: {best_acc:.4f}")
+    return best_acc, model
+
+
 
 

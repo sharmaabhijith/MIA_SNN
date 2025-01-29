@@ -6,7 +6,6 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, random_split, ConcatDataset, Dataset
 import torch.utils.data as data
 from Preprocess.augment import Cutout, CIFAR10Policy
-from Preprocess.cifar10_dvs import CIFAR10DVS
 from PIL import Image, ImageEnhance, ImageOps
 from typing import List, Tuple, Any
 import random
