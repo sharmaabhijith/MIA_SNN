@@ -3,19 +3,19 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
-from spiking_layer_ours import *  # Import custom spiking layer module
-from Models import modelpool  # Import function to fetch models
-from Preprocess import datapool, get_dataloader_from_dataset, load_dataset, split_dataset  # Import data preprocessing module
+from spiking_layer_ours import *
+from Models import modelpool
+from Preprocess import datapool, get_dataloader_from_dataset, load_dataset, split_dataset 
 from torchvision.models.feature_extraction import create_feature_extractor
 from torch.utils.data import Subset
 import os
 import argparse
-from funcs import *  # Import additional custom functions
+from funcs import *
 import numpy as np
 import time
 import pickle
 import logging
-from utils import *  # Import utility functions
+from utils import *
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='PyTorch ANN-SNN Conversion')
@@ -41,9 +41,6 @@ torch.cuda.empty_cache()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Define hyperparameters
-input_size = 784
-hidden_size = 500
-num_classes = 10  # Number of output classes
 num_epochs = args.epochs
 batch_size = 128  
 
@@ -103,7 +100,7 @@ for model_idx in range(0, args.reference_models+1):
     criterion = nn.CrossEntropyLoss()
     # Start training the ANN model
     logger.info("Starting training...")
-    train_ann(train_loader, test_loader, model, num_epochs, device, criterion, args.lr, args.wd, savename)
+    train_ann(train_loader, test_loader, model, num_epochs, device, criterion, logger, args.lr, args.wd, savename)
     logger.info("Training completed successfully")
     # Refresh memory
     del model

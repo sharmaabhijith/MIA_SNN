@@ -14,111 +14,10 @@ import os
 import argparse
 from funcs import *
 import numpy as np
-import time
-import sys
 import calc_th_with_c as ft
 from copy import deepcopy
 import pickle
 from utils import *
-
-
-def isActivation(name):
-    if 'relu' in name.lower():
-        return True
-    return False
-
-
-def replace_activation_by_spike(model, thresholds, thresholds1, n_steps, counter=0):
-    thresholds_new = deepcopy(thresholds)
-    thresholds_new1 = deepcopy(thresholds1)
-
-    for name, module in model._modules.items():
-        if hasattr(module, "_modules"):
-            model._modules[name], counter, thresholds_new = replace_activation_by_spike(module, thresholds_new, thresholds_new1, n_steps, counter)
-        if isActivation(module.__class__.__name__.lower()):
-            thresholds_new[counter, n_steps:] = thresholds_new1[counter, 1] / n_steps
-            thresholds_new[counter, :n_steps] = thresholds_new1[counter, 0] / n_steps
-            model._modules[name] = SPIKE_layer(thresholds_new[counter, n_steps:], thresholds_new[counter, 0:n_steps])
-            counter += 1
-    return model, counter, thresholds_new
-
-
-def ann_to_snn(model, thresholds, thresholds1, n_steps):
-    logger.info("Converting ANN to SNN...")
-    model, counter, thresholds_new = replace_activation_by_spike(model, thresholds, thresholds1, n_steps)
-    model = replace_maxpool2d_by_avgpool2d(model)
-    model = replace_layer_by_tdlayer(model)
-    logger.info("Conversion complete.")
-    return model, thresholds_new
-
-
-def test_snn(model, test_loader, n_steps, criterion, device):
-    logger.info("Testing SNN...")
-    model.eval()
-    with torch.no_grad():
-        correct = 0
-        total = 0
-        loss = 0
-        for images, labels in test_loader:
-            images = add_dimension(images, n_steps)
-            images = images.to(device)
-            labels = labels.to(device)
-
-            outputs = model(images, L=0, t=n_steps)
-            outputs = torch.sum(outputs, 1)
-            _, predicted = torch.max(outputs.data/n_steps, 1)
-            loss += criterion(outputs/n_steps, labels).item()*images.shape[0]
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-        test_loss = loss/total
-        test_acc = 100 * correct / total
-    logger.info(f"SNN Testing Complete. Loss: {test_loss:.4f}, Accuracy: {test_acc:.2f}%")
-    return test_loss, test_acc
-
-
-def train_snn(train_dataloader, test_loader, model, n_steps, epochs, optimizer,
-              scheduler, device, loss_fn, args, savename):
-    logger.info("Starting SNN training...")
-    model.to(device)
-    best_epoch = 0
-    best_acc = 0
-    for epoch in range(epochs):
-        logger.info(f"Epoch {epoch+1}/{epochs}...")
-        model.train()
-        epoch_loss = 0
-        total = 0
-        correct = 0
-
-        for img, label in train_dataloader:
-            img = add_dimension(img, n_steps)
-            img = img.to(device)
-
-            labels = label.to(device)
-            outputs = model(img, L=0, t=n_steps) 
-            outputs = torch.mean(outputs, 1)
-            optimizer.zero_grad()
-            loss = loss_fn(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            epoch_loss += loss.item()*img.shape[0]
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-        
-        logger.info(f"Epoch {epoch+1} - Train Loss: {epoch_loss/total:.4f}, Train Accuracy: {100 * correct / total:.2f}%")
-        scheduler.step()
-
-        test_loss, test_acc = test_snn(model, test_loader, n_steps, loss_fn, device)
-        if best_acc <= test_acc:
-            save_path = f"{savename}_snn_T{n_steps}"
-            torch.save(model.state_dict(), save_path + ".pth")
-            with open(save_path + ".pkl", "wb") as f:
-                pickle.dump(model.state_dict(), f)
-            best_acc = test_acc
-            best_epoch = epoch
-            logger.info(f"New Best Accuracy: {best_acc:.2f}% at Epoch {best_epoch+1}. Model saved to {save_path}.")
-
-    return model
 
 
 logger.info("Initializing ANN-to-SNN Conversion Script...")
@@ -207,7 +106,7 @@ for model_idx in range(0, args.reference_models+1):
     num_relu = str(model).count('ReLU')
     thresholds = torch.zeros(num_relu, 2*n_steps)
     thresholds1 = torch.Tensor(np.load('%s_threshold_all_noaug%d.npy' % (savename, 1)))
-    ann_to_snn(model, thresholds, thresholds1, n_steps)
+    ann_to_snn(model, thresholds, thresholds1, n_steps, logger)
     if n_steps > 1:
         model.load_state_dict(torch.load(f"{savename}_snn_T{n_steps-1}.pth"))
     model.to(device)
@@ -229,15 +128,15 @@ for model_idx in range(0, args.reference_models+1):
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, verbose=True)
 
     logger.info("Testing initial SNN accuracy...")
-    test_loss, test_acc = test_snn(model, test_loader, n_steps, criterion, device)
+    test_loss, test_acc = test_snn(model, test_loader, n_steps, criterion, device, logger)
     logger.info(f"Initial Accuracy: {test_acc:.2f}%")
 
     logger.info("Training SNN .... ")
-    model = train_snn(train_loader, test_loader, model, n_steps, args.epochs, optimizer, scheduler, device, criterion, args, savename)
+    model = train_snn(train_loader, test_loader, model, n_steps, args.epochs, optimizer, scheduler, device, criterion, args, savename, logger)
     logger.info("ANN-to-SNN Conversion and Training Complete.")
 
     logger.info("Testing calibrated SNN accuracy...")
-    test_loss, test_acc = test_snn(model, test_loader, n_steps, criterion, device)
+    test_loss, test_acc = test_snn(model, test_loader, n_steps, criterion, device, logger)
     logger.info(f"Final Accuracy: {test_acc:.2f}%")
 
     # Refresh memory

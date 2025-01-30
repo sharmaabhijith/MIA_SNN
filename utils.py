@@ -3,10 +3,12 @@ import pickle
 import torch
 import random
 import logging
+import tqdm
 import numpy as np
 import torch.nn as nn
 from copy import deepcopy
 from typing import Optional
+from Models import modelpool
 from spiking_layer_ours import *
 from torch.nn.parameter import Parameter
 from torch.nn import functional as F
@@ -347,6 +349,43 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
     
     logger.info(f"Training completed. Best accuracy: {best_acc:.4f}")
     return best_acc, model
+
+def load_model(model, dataset, model_type, n_reference_models, primary_model_path, device, n_steps):
+    if "ann" == model_type:
+        target_model = modelpool(model, dataset)
+        target_model.to(device)
+        model_path = os.path.join(primary_model_path, f"model_0", "ann")
+        target_model.load_state_dict(torch.load(model_path + '.pth'))
+        reference_models = []
+        for idx in range(n_reference_models):
+            ref_model = modelpool(model, dataset)
+            ref_model.to(device)
+            model_path = os.path.join(primary_model_path, f"model_{idx+1}", "ann")
+            ref_model.load_state_dict(torch.load(model_path + '.pth'))
+            reference_models.append(ref_model)
+    elif "snn" == model_type:
+        target_model = modelpool(model, dataset)
+        target_model = target_model.to(device)
+        model_path = os.path.join(primary_model_path, f"model_0", f"ann_snn_T{n_steps}")
+        ann_model_path = os.path.join(primary_model_path, f"model_0", "ann")
+        num_relu = str(target_model).count('ReLU')
+        thresholds = torch.zeros(num_relu, 2*n_steps)
+        thresholds1 = torch.Tensor(np.load('%s_threshold_all_noaug%d.npy' % (ann_model_path, 1)))
+        target_model, threshold_new = ann_to_snn(target_model, thresholds, thresholds1, n_steps)
+        target_model.load_state_dict(torch.load(model_path + '.pth'))
+        for idx in range(n_reference_models):
+            ref_model = modelpool(model, dataset)
+            ref_model.to(device)
+            model_path = os.path.join(primary_model_path, f"model_{idx+1}", model_type)
+            ann_model_path = os.path.join(primary_model_path, f"model_{idx+1}", "ann")
+            num_relu = str(target_model).count('ReLU')
+            thresholds = torch.zeros(num_relu, 2*n_steps)
+            thresholds1 = torch.Tensor(np.load('%s_threshold_all_noaug%d.npy' % (ann_model_path, 1)))
+            target_model, threshold_new = ann_to_snn(target_model, thresholds, thresholds1, n_steps)
+            ref_model.load_state_dict(torch.load(model_path + '.pth'))
+            reference_models.append(ref_model)
+
+    return target_model, reference_models
 
 
 

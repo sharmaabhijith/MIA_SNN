@@ -3,12 +3,7 @@ from .VGG import *
 
 def modelpool(MODELNAME, DATANAME):
     in_channel=3
-    if 'tiny-imagenet' in DATANAME.lower():
-        num_classes = 200
-       
-    elif 'imagenet' in DATANAME.lower():
-        num_classes = 1000
-    elif '100' in DATANAME.lower():
+    if '100' in DATANAME.lower():
         num_classes = 100
     else:
         num_classes = 10
