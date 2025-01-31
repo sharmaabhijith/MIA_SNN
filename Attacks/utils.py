@@ -59,6 +59,60 @@ def plot_auc(results):
     plt.legend(loc="lower right")
     plt.grid(alpha=0.3)
     plt.show()
+# Define the top-half clustering function
+def top_half_clustering(X):
+    """
+    Perform clustering by assigning the top 50% of sorted data to one cluster (1)
+    and the bottom 50% to another cluster (0).
+
+    Args:
+        X (numpy.ndarray): 1D array of data points.
+
+    Returns:
+        numpy.ndarray: Cluster labels (0 for bottom 50%, 1 for top 50%).
+    """
+    # Sort the data and determine the median index
+    sorted_indices = np.argsort(X)
+    labels = np.zeros(len(X), dtype=int)
+
+    # Assign top 50% of sorted data to cluster 1
+    labels[sorted_indices[len(X) // 2:]] = 1
+
+    return labels
+
+def compute_dissimilarity(X_train, X_test):
+    """
+    Compute the dissimilarity metric d_dissimilarity using the top-half clustering method.
+    
+    Args:
+        X_train (numpy.ndarray): 1D array of training data.
+        X_test (numpy.ndarray): 1D array of testing data.
+
+    Returns:
+        float: The computed dissimilarity metric.
+    """
+    # Combine training and testing data
+    X = np.concatenate([X_train, X_test])
+
+    # Perform clustering using top-half method
+    labels = top_half_clustering(X)
+
+    # Extract labels for training and testing sets
+    train_labels = labels[:len(X_train)]
+    test_labels = labels[len(X_train):]
+
+    # Compute mean cluster assignments
+    x_train_mean = np.mean(train_labels)
+    x_test_mean = np.mean(test_labels)
+
+    # Compute dissimilarity metric
+    d_dissimilarity = abs(x_train_mean - 0.5)
+
+    return d_dissimilarity
+
+# Compute the dissimilarity metric using top-half clustering
+# d_value_top_half = compute_dissimilarity(X_train, X_test)
+# d_value_top_half
 
 
 def plot_histogram(scores):
