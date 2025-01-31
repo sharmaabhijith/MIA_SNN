@@ -1,4 +1,4 @@
-# 🧠 MIA_SNN
+#  🧠🔒 MIA_SNN
 
 **MIA_SNN** is a project focused on implementing and analyzing *Membership Inference Attacks (MIA)* on *Spiking Neural Networks (SNNs)*. The codebase includes tools for computing thresholds for latency (T=1 to T=4) and calibrating converted SNN models. All models are trained using the **PyTorch** framework.
 
@@ -115,11 +115,7 @@ The `Scripts` directory contains various Bash scripts designed to streamline the
 
 ## 📓 Demo Notebook
 
-For a hands-on demonstration of the MIA_SNN framework, you can explore the `demo.ipynb` notebook located in the `notebooks/` directory. This notebook provides:
-
-- **Interactive Examples**: Step-by-step guides to train models, convert them to SNNs, and perform membership inference attacks.
-- **Visualizations**: Graphs and plots to help understand the performance and behavior of the models.
-- **Code Snippets**: Ready-to-run code blocks that you can execute in your own environment.
+For a hands-on demonstration of the MIA attack on trained_SNN models, you can explore the `demo.ipynb` notebook located in the `notebooks/` directory.
 
 ## 📂 Project Structure
 
