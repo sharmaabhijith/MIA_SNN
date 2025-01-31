@@ -121,8 +121,6 @@ data_loader = get_dataloader_from_dataset(
     train=False
 )
 logger.info(f"Dataset loaded successfully. Batches: {len(data_loader)}")
-# Define the loss function
-criterion = nn.CrossEntropyLoss()
 # Load the specified model from the model pool
 logger.info(f"Loading {full_model_type} model: {args.model} for dataset: {args.dataset}")
 # Load trained models
@@ -130,7 +128,18 @@ target_model, reference_models = load_model(
     args.model, args.dataset, args.model_type, args.reference_models, primary_model_path, device, n_steps
 )
 # Perform attack and get results
-attack = get_attack_instance(target_model, reference_models, data_loader, device, args)
+attack = perform_MIA(
+            attack_type = args.attack, 
+            model_type = args.model_type,
+            target_model = target_model, 
+            reference_models = reference_models, 
+            data_loader = data_loader, 
+            device = device,
+            n_steps = n_steps,
+            calibration = args.calibration,
+            dropout = args.dropout,
+            n_samples = args.n_samples,
+        )
 attack.compute_scores()
 results = attack.get_results()
 logger.info(f"Results: \n {results}")

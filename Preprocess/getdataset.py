@@ -11,7 +11,10 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 from torchvision.datasets import ImageFolder, CIFAR10, CIFAR100
 from .getdataloader import CIFAR10Policy, Cutout
+from utils import GlobalLogger
 
+
+logger = GlobalLogger.get_logger(__name__)
 
 def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
     """

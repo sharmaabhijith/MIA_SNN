@@ -16,8 +16,8 @@ def datapool(DATANAME, batchsize, num_workers, train_test_split=-1, shuffle=True
         exit(0)
 
 
-def load_dataset(dataset_name: str, logger: logging.Logger) -> Any:
-    return get_dataset(dataset_name, logger)
+def load_dataset(dataset_name: str) -> Any:
+    return get_dataset(dataset_name)
 
 def split_dataset(dataset_size: int, num_reference_models: int):
     return split_dataset_for_training(dataset_size, num_reference_models)
