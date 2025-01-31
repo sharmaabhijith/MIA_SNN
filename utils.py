@@ -394,7 +394,5 @@ def str2bool(v):
         return True
     elif v.lower() in ('false', '0', 'no'):
         return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 

@@ -5,22 +5,27 @@ import logging
 import pandas as pd
 import numpy as np
 from utils import *
+from pathlib import Path
 from torch.utils.data import Subset
-from Preprocess import datapool, get_dataloader_from_dataset, load_dataset, split_dataset
+from Preprocess import get_dataloader_from_dataset, load_dataset
 from Attacks.utils import *
-from Attacks import Attack_P, Attack_R, Attack_RMIA
+from Attacks import *
+
+
+ATTACK_NAMES = ["attack_p", "attack_r", "rmia"]
+DATASET_NAMES = ["cifar10", "cifar100", "imagenette", "imagewoof"]
+MODEL_NAMES = ["vgg16", "resnet18", "resnet34"]
 
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='PyTorch ANN-SNN Conversion')
-
 # Define arguments for model parameters and settings
 parser.add_argument("--attack", default="rmia", type=str, help="Type of MIA attack",
-                    choices=["rmia", "attack_p", "attack_r"])
+                    choices=ATTACK_NAMES)
 parser.add_argument('--dataset', default='cifar10', type=str, help='Dataset name',
-                    choices=['cifar10', 'cifar100', 'imagenette', 'imagewoof'])
+                    choices=DATASET_NAMES)
 parser.add_argument('--model', default='resnet18', type=str, help='Model name',
-                    choices=['vgg16', 'resnet18', 'resnet34'])
+                    choices=MODEL_NAMES)
 parser.add_argument('--model_type', default='ann', type=str, help='ANN or SNN',
                     choices=["ann", "snn"])
 parser.add_argument('--t', default=300, type=int, help='T Latency length (Simulation time-steps)')
@@ -39,20 +44,43 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size = 128
 n_steps = args.t
 if args.model_type=="ann":
+    half_model_type = "ann"
     full_model_type = "ann"
 elif args.model_type=="snn":
+    half_model_type = f"snn_T{n_steps}"
     full_model_type = f"ann_snn_T{n_steps}"
 
 n_reference_models = args.reference_models
 # Creating directory to save trained models and their logs
 primary_model_path = os.path.join(args.checkpoint, args.dataset, args.model, f"ref_models_{n_reference_models}")
-primary_result_path = os.path.join(args.result_dir, args.dataset, args.model, f"ref_models_{n_reference_models}")
+primary_result_path = os.path.join(args.result_dir, args.dataset)
 primary_log_path = os.path.join("attack_logs", args.dataset, args.model, f"ref_models_{n_reference_models}")
 # Create result dir
-full_result_path = os.path.join(primary_result_path, args.attack, full_model_type)
-if os.path.exists(full_result_path) is False:
-    print("Creating log directory:", full_result_path)
-    os.makedirs(full_result_path)
+if os.path.exists(primary_result_path) is False:
+    print("Creating result directory:", primary_result_path)
+    os.makedirs(primary_result_path)
+# Create result csv file if not exists
+result_file_path = Path(primary_result_path, f"results_rm{n_reference_models}.csv")
+if os.path.exists(result_file_path):
+    existing_df = pd.read_csv(result_file_path)
+else:
+    # Define Multi-level columns
+    column_names = DATASET_NAMES
+    sub_column_names1 = ATTACK_NAMES
+    sub_column_names2 = [f"snn_T{i}" for i in [1, 2, 4]] + ["ann"] 
+    column_tuples = [
+        (data, attack, model_type) 
+        for data in column_names for attack in sub_column_names1 for model_type in sub_column_names2
+    ]
+    columns = pd.MultiIndex.from_tuples(column_tuples)
+    # Define Multi-level rows
+    row_names = MODEL_NAMES
+    sub_row_names = ["wo_calibration", "w_calibration"] 
+    row_tuples = [(model_name, cali) for model_name in row_names for cali in sub_row_names]
+    rows= pd.MultiIndex.from_tuples(row_tuples)
+    existing_df = pd.DataFrame(index=rows, columns=columns)
+    existing_df.to_csv(result_file_path)
+
 # Create log dir
 full_log_path = os.path.join(primary_log_path, args.attack)
 if os.path.exists(full_log_path) is False:
@@ -97,28 +125,16 @@ logger.info(f"Dataset loaded successfully. Batches: {len(data_loader)}")
 criterion = nn.CrossEntropyLoss()
 # Load the specified model from the model pool
 logger.info(f"Loading {full_model_type} model: {args.model} for dataset: {args.dataset}")
-
+# Load trained models
 target_model, reference_models = load_model(
     args.model, args.dataset, args.model_type, args.reference_models, primary_model_path, device, n_steps
 )
-if args.attack == "attack_p":
-    attack = Attack_P(
-        target_model, data_loader, device, args.model_type, n_steps, 
-        args.calibration, args.dropout, args.n_samples, reference_models
-    )
-elif args.attack == "attack_r":
-    attack = Attack_R(
-        target_model, data_loader, device, args.model_type, n_steps, 
-        args.calibration, args.dropout, args.n_samples, reference_models
-    )
-elif args.attack == "rmia":
-    attack = Attack_RMIA(
-        target_model, data_loader, device, args.model_type, n_steps, 
-        args.calibration, args.dropout, args.n_samples, reference_models
-    )
-else:
-    raise ValueError(f"Invalid attack type: {args.attack}")
-
+# Perform attack and get results
+attack = get_attack_instance(target_model, reference_models, data_loader, device, args)
 attack.compute_scores()
 results = attack.get_results()
 logger.info(f"Results: \n {results}")
+# Save Results
+cali_type = "w_calibration" if args.calibration else "wo_calibration"
+existing_df[(args.dataset, args.attack, half_model_type), (args.model, cali_type)] = results
+existing_df.to_csv(result_file_path)

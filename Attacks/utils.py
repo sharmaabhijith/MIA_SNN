@@ -30,13 +30,13 @@ def compute_attack_results(mia_scores, target_memberships):
     zero_fpr = tpr_list[zero_fpr_indices[-1]] if zero_fpr_indices.size > 0 else 0.0
 
     return {
-        "fpr": fpr_list,
-        "tpr": tpr_list,
+        #"fpr": fpr_list,
+        #"tpr": tpr_list,
         "auc": roc_auc,
         "one_fpr": one_fpr,
         "one_tenth_fpr": one_tenth_fpr,
         "zero_fpr": zero_fpr,
-        "thresholds": thresholds
+        #"thresholds": thresholds
     }
 
 def visualization(results):
@@ -143,3 +143,4 @@ def compute_confidence(model, data_loader, device, is_snn, n_steps, calibration,
             confidence_list.append(confidences)
     confidence_list = torch.cat(confidence_list, dim=0).cpu().numpy()
     return confidence_list
+
