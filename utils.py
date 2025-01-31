@@ -191,12 +191,10 @@ def replace_activation_by_spike(model, thresholds, thresholds1, n_steps, counter
     return model, counter, thresholds_new
 
 
-def ann_to_snn(model, thresholds, thresholds1, n_steps, logger):
-    logger.info("Converting ANN to SNN...")
+def ann_to_snn(model, thresholds, thresholds1, n_steps):
     model, counter, thresholds_new = replace_activation_by_spike(model, thresholds, thresholds1, n_steps)
     model = replace_maxpool2d_by_avgpool2d(model)
     model = replace_layer_by_tdlayer(model)
-    logger.info("Conversion complete.")
     return model, thresholds_new
 
 
@@ -351,12 +349,13 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
     return best_acc, model
 
 def load_model(model, dataset, model_type, n_reference_models, primary_model_path, device, n_steps):
+    target_model = None
+    reference_models = []
     if "ann" == model_type:
         target_model = modelpool(model, dataset)
         target_model.to(device)
         model_path = os.path.join(primary_model_path, f"model_0", "ann")
         target_model.load_state_dict(torch.load(model_path + '.pth'))
-        reference_models = []
         for idx in range(n_reference_models):
             ref_model = modelpool(model, dataset)
             ref_model.to(device)
@@ -376,17 +375,26 @@ def load_model(model, dataset, model_type, n_reference_models, primary_model_pat
         for idx in range(n_reference_models):
             ref_model = modelpool(model, dataset)
             ref_model.to(device)
-            model_path = os.path.join(primary_model_path, f"model_{idx+1}", model_type)
+            model_path = os.path.join(primary_model_path, f"model_{idx+1}", f"ann_snn_T{n_steps}")
             ann_model_path = os.path.join(primary_model_path, f"model_{idx+1}", "ann")
-            num_relu = str(target_model).count('ReLU')
+            num_relu = str(ref_model).count('ReLU')
             thresholds = torch.zeros(num_relu, 2*n_steps)
             thresholds1 = torch.Tensor(np.load('%s_threshold_all_noaug%d.npy' % (ann_model_path, 1)))
-            target_model, threshold_new = ann_to_snn(target_model, thresholds, thresholds1, n_steps)
+            ref_model, threshold_new = ann_to_snn(ref_model, thresholds, thresholds1, n_steps)
             ref_model.load_state_dict(torch.load(model_path + '.pth'))
             reference_models.append(ref_model)
 
     return target_model, reference_models
 
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('true', '1', 'yes'):
+        return True
+    elif v.lower() in ('false', '0', 'no'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 

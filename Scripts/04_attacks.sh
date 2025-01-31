@@ -12,15 +12,14 @@
 #SBATCH -q cscc-gpu-qos
 
 ATTACK="rmia"
-DATASET="cifar10"
+DATASET="cifar100"
 MODEL="resnet18"
 MODEL_TYPE="ann"
 LATENCY=1
 REF_MODELS=4
-CALIBRATION=False
+CALIBRATION=0
 DROPOUT=0.01
 N_SAMPLES=10
 
 # Loop through each model and run the training script
-python attack.py --attack $ATTACK --dataset $DATASET --model $MODEL --model_type $MODEL_TYPE --t $LATENCY \
---calibration $CALIBRATION --dropout $DROPOUT --n_samples $N_SAMPLES --reference_models $REF_MODELS
+python3 attack.py --attack $ATTACK --dataset $DATASET --model $MODEL --model_type $MODEL_TYPE --t $LATENCY --calibration $CALIBRATION --dropout $DROPOUT --n_samples $N_SAMPLES --reference_models $REF_MODELS

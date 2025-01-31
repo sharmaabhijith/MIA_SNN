@@ -50,32 +50,36 @@ class BaseAttack:
             assert dropout is not None, "dropout must be provided for calibration"
             assert n_samples is not None, "n_samples must be provided for calibration"
 
-    def compute_confidence(self, model):
+    def compute_base_confidence(self, model):
         """Helper function to compute confidence scores."""
-        self.scores =  compute_confidence(
+        logger.info("Computing confidence scores ...")
+        scores =  compute_confidence(
             model, self.data_loader, self.device, self.is_snn, 
             self.n_steps, self.calibration, self.dropout, self.n_samples
         )
+        return scores
 
     def get_results(self):
-        return compute_attack_results(self.scores, TARGET_MEMBERSHIPS)
+        logger.info("Getting results ...")
+        results = compute_attack_results(self.scores, TARGET_MEMBERSHIPS)
+        return results
 
 
 class Attack_P(BaseAttack):
     def compute_scores(self):
         """Computes the Attack-P scores for the target model."""
-        self.scores = self.compute_confidence(self.target_model)
+        self.scores = self.compute_base_confidence(self.target_model)
 
 
 class Attack_R(BaseAttack):
     def compute_scores(self):
         """Computes the Attack-R scores for the target model."""
         self.target_model.eval()
-        target_confidences = np.expand_dims(self.compute_confidence(self.target_model), axis=0)
+        target_confidences = np.expand_dims(self.compute_base_confidence(self.target_model), axis=0)
         reference_confidences = []
         for ref_model in self.reference_models:
             ref_model.eval()
-            reference_confidences.append(self.compute_confidence(ref_model))
+            reference_confidences.append(self.compute_base_confidence(ref_model))
         
         reference_confidences = np.array(reference_confidences)
         # Compute ratio and attack scores
@@ -88,11 +92,11 @@ class Attack_RMIA(Attack_R):
     def compute_scores(self):
         """Computes the Attack-RMIA scores for the target model."""
         self.target_model.eval()
-        target_confidences = np.expand_dims(self.compute_confidence(self.target_model), axis=0)
+        target_confidences = np.expand_dims(self.compute_base_confidence(self.target_model), axis=0)
         reference_confidences = []
         for ref_model in self.reference_models:
             ref_model.eval()
-            reference_confidences.append(self.compute_confidence(ref_model))
+            reference_confidences.append(self.compute_base_confidence(ref_model))
         reference_confidences = np.array(reference_confidences)
         pr_x = np.mean(reference_confidences, axis=0)
         # Compute RMIA scores

@@ -122,7 +122,6 @@ def compute_confidence(model, data_loader, device, is_snn, n_steps, calibration,
     
     with torch.no_grad():
         for images, labels in data_loader:
-            print("IAM HERE")
             if is_snn:
                 images = add_dimension(images, n_steps)
             images = images.to(device)

@@ -27,7 +27,7 @@ parser.add_argument('--t', default=300, type=int, help='T Latency length (Simula
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory of saved models')
 parser.add_argument('--reference_models', default=4, type=int, help='Number of reference models')
 parser.add_argument('--result_dir', default='./attack_results', type=str, help='Directory for saving results')
-parser.add_argument('--calibration', default=False, type=bool, help='Dropout based calibration')
+parser.add_argument('--calibration', type=str2bool, default="False", help='Dropout based calibration')
 parser.add_argument('--dropout', default=0.01, type=float, help='Image dropout ratio')
 parser.add_argument('--n_samples', default=10, type=int, help='Number of samples for calibration')
 args = parser.parse_args()
@@ -43,10 +43,11 @@ if args.model_type=="ann":
 elif args.model_type=="snn":
     full_model_type = f"ann_snn_T{n_steps}"
 
+n_reference_models = args.reference_models
 # Creating directory to save trained models and their logs
-primary_model_path = os.path.join(args.checkpoint, args.dataset, args.model, f"ref_models_{args.reference_models}")
-primary_result_path = os.path.join(args.result_dir, args.dataset, args.model, f"ref_models_{args.reference_models}")
-primary_log_path = os.path.join("attack_logs", args.dataset, args.model, f"ref_models_{args.reference_models}")
+primary_model_path = os.path.join(args.checkpoint, args.dataset, args.model, f"ref_models_{n_reference_models}")
+primary_result_path = os.path.join(args.result_dir, args.dataset, args.model, f"ref_models_{n_reference_models}")
+primary_log_path = os.path.join("attack_logs", args.dataset, args.model, f"ref_models_{n_reference_models}")
 # Create result dir
 full_result_path = os.path.join(primary_result_path, args.attack, full_model_type)
 if os.path.exists(full_result_path) is False:
@@ -100,21 +101,20 @@ logger.info(f"Loading {full_model_type} model: {args.model} for dataset: {args.d
 target_model, reference_models = load_model(
     args.model, args.dataset, args.model_type, args.reference_models, primary_model_path, device, n_steps
 )
-print("YAAY1")
 if args.attack == "attack_p":
     attack = Attack_P(
         target_model, data_loader, device, args.model_type, n_steps, 
-        args.calibration, args.dropout, args.n_samples, args.reference_models
+        args.calibration, args.dropout, args.n_samples, reference_models
     )
 elif args.attack == "attack_r":
     attack = Attack_R(
         target_model, data_loader, device, args.model_type, n_steps, 
-        args.calibration, args.dropout, args.n_samples, args.reference_models
+        args.calibration, args.dropout, args.n_samples, reference_models
     )
 elif args.attack == "rmia":
     attack = Attack_RMIA(
         target_model, data_loader, device, args.model_type, n_steps, 
-        args.calibration, args.dropout, args.n_samples, args.reference_models
+        args.calibration, args.dropout, args.n_samples, reference_models
     )
 else:
     raise ValueError(f"Invalid attack type: {args.attack}")
@@ -122,5 +122,3 @@ else:
 attack.compute_scores()
 results = attack.get_results()
 logger.info(f"Results: \n {results}")
-print(f"RESULTS: \n {results}")
-
