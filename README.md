@@ -1,34 +1,106 @@
-# MIA_SNN
+# 🧠 MIA_SNN
 
-Code includes computing thresholds for latency T=1 and calibrating the converted SNN model.
+**MIA_SNN** is a project focused on implementing and analyzing *Membership Inference Attacks (MIA)* on *Spiking Neural Networks (SNNs)*. The codebase includes tools for computing thresholds for latency (T=1) and calibrating converted SNN models. All models are trained using the **PyTorch** framework.
 
-All the models are trained using PyTorch Framework.
+## 📋 Table of Contents
 
+- [✨ Features](#-features)
+- [⚙️ Installation](#️-installation)
+- [🚀 Usage](#-usage)
+  - [🛠️ Training an ANN Model](#️-training-an-ann-model)
+  - [🔄 Converting an ANN to an SNN](#-converting-an-ann-to-an-snn)
+  - [🕵️‍♂️ Running Membership Inference Attacks](#️-running-membership-inference-attacks)
+- [📂 Project Structure](#-project-structure)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
 
+## ✨ Features
 
-One can use already trained ANN model for SNN conversion or can train ANN models using train_ann.py  file.
+- 🏋️‍♂️ Training *Artificial Neural Network (ANN)* models on **CIFAR-10** and **CIFAR-100** datasets
+- 🔄 Converting trained ANN models to *Spiking Neural Networks (SNNs)*
+- 📏 Computing thresholds for latency (T=1) and calibrating SNN models
+- 🕵️‍♂️ Implementing *Membership Inference Attacks (MIA)* to assess the privacy of SNNs
 
----------------------------------------------------------------------------------------------------------
-python3 train_ann.py --dataset cifar10/cifar100 --model vgg16/resnet18/resnet20/cifarnet 
+## ⚙️ Installation
 
+### Set Up the Python Environment
 
----------------------------------------------------------------------------------------------------------
-To compute the threshold and initial potential values, 
+It's recommended to use a virtual environment to manage dependencies.
 
-python3 feature_extraction.py ----iter 1 --samples 100 --model vgg16/resnet18/resnet20/cifarnet --dataset  cifar10/cifar100 
---checkpoint dir-name
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
-# iter - Number of iterations required to find the membrane potential and initial potential values.
-# samples- Number of training data points used for computing the optimal threshold and initial potential values. 
-dir-name - path to the directory where the trained models are stored.
+### Install Dependencies
 
-In feature_extraction.py , to accelerate the computation speed we used a C routine and can be found in test.c file. test.so file
-is also included, if it shows an error while loading the .so file, please compile the test.c file to generate .so file.
----------------------------------------------------------------------------------------------------------
-For calibrating the converted SNN model, 
-python3 train_snn_converted.py --model vgg16 --dataset cifar10 --t 1 --epochs 50.
+Ensure you have PyTorch installed. You can install the required packages using:
 
-For t=1, it trains an SNN model intialized with the weights of ANN model.
-For t>1, it trains an SNN model intialized with the weights of SNN model with latency t-1. 
-For t>1, 20 epochs are enough.
+```bash
+pip install -r requirements.txt
+```
 
+Note: The requirements.txt file should list all necessary packages, including PyTorch. If it's missing or incomplete, you'll need to install PyTorch separately. Refer to the PyTorch official website for installation instructions tailored to your system.
+
+## 🚀 Usage
+
+### 🛠️ Training an ANN Model
+
+To train an ANN model on either the CIFAR-10 or CIFAR-100 dataset:
+
+```bash
+python3 train_ann.py --dataset [cifar10|cifar100] --model [vgg16|resnet18|resnet20|cifarnet]
+```
+
+Replace [cifar10|cifar100] with your desired dataset and [vgg16|resnet18|resnet20|cifarnet] with your chosen model architecture.
+
+### 🔄 Converting an ANN to an SNN
+
+After training the ANN model, you can convert it to an SNN:
+
+```bash
+python3 train_snn_converted.py --dataset [cifar10|cifar100] --model [vgg16|resnet18|resnet20|cifarnet]
+```
+
+This script computes the necessary thresholds and calibrates the SNN model.
+
+### 🕵️‍♂️ Running Membership Inference Attacks
+
+To perform a Membership Inference Attack on the trained SNN model:
+
+```bash
+python3 attack.py --dataset [cifar10|cifar100] --model [vgg16|resnet18|resnet20|cifarnet]
+```
+
+This will evaluate the privacy vulnerabilities of your SNN model.
+
+## 📂 Project Structure
+
+```
+📂 MIA_SNN
+├── Attacks/        # Contains scripts related to implementing various attack strategies
+├── GradCAM/        # Tools for visualizing model decisions using Grad-CAM
+├── Helpers/        # Utility functions for data processing and model management
+├── Models/         # Definitions of various neural network architectures
+├── Preprocess/     # Scripts for data preprocessing and augmentation
+├── Scripts/        # Miscellaneous bash scripts for evaluation and analysis
+├── notebooks/      # Jupyter notebooks for exploratory analysis and demonstrations
+├── saved_models/   # Directory to save and load trained model checkpoints
+└── README.md       # Project documentation
+```
+
+## 🤝 Contributing
+
+We welcome contributions to enhance the MIA_SNN project. If you're interested in contributing, please follow these steps:
+
+1. 🍴 Fork the repository
+2. 🌿 Create a new branch for your feature or bug fix
+3. 💬 Commit your changes with clear and concise messages
+4. 📤 Push your branch to your forked repository
+5. 📥 Open a Pull Request detailing your changes and the motivation behind them
+
+Please ensure that your code adheres to the existing style and includes appropriate tests.
+
+## 📜 License
+
+This project is licensed under the MIT License. See the LICENSE file for more details.
