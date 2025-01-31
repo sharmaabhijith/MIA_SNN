@@ -8,7 +8,8 @@
 - [⚙️ Installation](#️-installation)
 - [🚀 Usage](#-usage)
   - [🛠️ Training an ANN Model](#️-training-an-ann-model)
-  - [🔄 Converting an ANN to an SNN](#-converting-an-ann-to-an-snn)
+  - [📊 Computing Thresholds](#-computing-thresholds)
+  - [🔄 SNN Model Calibration](#-snn-model-calibration)
   - [🕵️‍♂️ Running Membership Inference Attacks](#️-running-membership-inference-attacks)
 - [📂 Project Structure](#-project-structure)
 - [🤝 Contributing](#-contributing)
@@ -40,29 +41,44 @@ Ensure you have PyTorch installed. You can install the required packages using:
 pip install -r requirements.txt
 ```
 
-Note: The requirements.txt file should list all necessary packages, including PyTorch. If it's missing or incomplete, you'll need to install PyTorch separately. Refer to the PyTorch official website for installation instructions tailored to your system.
+### C Routine Setup
+
+The project uses a C routine to accelerate computation speed. The `test.so` file is included in the repository. If you encounter any errors loading the `.so` file, you'll need to compile `test.c` to generate a new `.so` file.
 
 ## 🚀 Usage
 
 ### 🛠️ Training an ANN Model
 
-To train an ANN model on either the CIFAR-10 or CIFAR-100 dataset:
+You can either use a pre-trained ANN model for SNN conversion or train a new ANN model using `train_ann.py`:
 
 ```bash
 python3 train_ann.py --dataset [cifar10|cifar100] --model [vgg16|resnet18|resnet20|cifarnet]
 ```
 
-Replace [cifar10|cifar100] with your desired dataset and [vgg16|resnet18|resnet20|cifarnet] with your chosen model architecture.
+### 📊 Computing Thresholds
 
-### 🔄 Converting an ANN to an SNN
-
-After training the ANN model, you can convert it to an SNN:
+To compute the threshold and initial potential values:
 
 ```bash
-python3 train_snn_converted.py --dataset [cifar10|cifar100] --model [vgg16|resnet18|resnet20|cifarnet]
+python3 feature_extraction.py --iter 1 --samples 100 --model [vgg16|resnet18|resnet20|cifarnet] --dataset [cifar10|cifar100] --checkpoint dir-name
 ```
 
-This script computes the necessary thresholds and calibrates the SNN model.
+Parameters:
+- `iter`: Number of iterations required to find the membrane potential and initial potential values
+- `samples`: Number of training data points used for computing the optimal threshold and initial potential values
+- `dir-name`: Path to the directory where the trained models are stored
+
+### 🔄 SNN Model Calibration
+
+To calibrate the converted SNN model:
+
+```bash
+python3 train_snn_converted.py --model vgg16 --dataset cifar10 --t 1 --epochs 50
+```
+
+Training specifications:
+- For t=1: Trains an SNN model initialized with the weights of ANN model (50 epochs recommended)
+- For t>1: Trains an SNN model initialized with the weights of SNN model with latency t-1 (20 epochs recommended)
 
 ### 🕵️‍♂️ Running Membership Inference Attacks
 
@@ -71,8 +87,6 @@ To perform a Membership Inference Attack on the trained SNN model:
 ```bash
 python3 attack.py --dataset [cifar10|cifar100] --model [vgg16|resnet18|resnet20|cifarnet]
 ```
-
-This will evaluate the privacy vulnerabilities of your SNN model.
 
 ## 📂 Project Structure
 
@@ -83,9 +97,11 @@ This will evaluate the privacy vulnerabilities of your SNN model.
 ├── Helpers/        # Utility functions for data processing and model management
 ├── Models/         # Definitions of various neural network architectures
 ├── Preprocess/     # Scripts for data preprocessing and augmentation
-├── Scripts/        # Miscellaneous bash scripts for evaluation and analysis
+├── Scripts/        # Miscellaneous scripts for evaluation and analysis
 ├── notebooks/      # Jupyter notebooks for exploratory analysis and demonstrations
 ├── saved_models/   # Directory to save and load trained model checkpoints
+├── test.c         # C routine for accelerating computation
+├── test.so        # Compiled shared object file for C routine
 └── README.md       # Project documentation
 ```
 
@@ -100,7 +116,3 @@ We welcome contributions to enhance the MIA_SNN project. If you're interested in
 5. 📥 Open a Pull Request detailing your changes and the motivation behind them
 
 Please ensure that your code adheres to the existing style and includes appropriate tests.
-
-## 📜 License
-
-This project is licensed under the MIT License. See the LICENSE file for more details.
