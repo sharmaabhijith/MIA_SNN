@@ -6,14 +6,18 @@
 
 - [✨ Features](#-features)
 - [⚙️ Installation](#️-installation)
+  - [Set Up the Python Environment](#set-up-the-python-environment)
+  - [Install Dependencies](#install-dependencies)
+  - [C Routine Setup](#c-routine-setup)
 - [🚀 Usage](#-usage)
   - [🛠️ Training an ANN Model](#️-training-an-ann-model)
   - [📊 Computing Thresholds](#-computing-thresholds)
   - [🔄 SNN Model Calibration](#-snn-model-calibration)
   - [🕵️‍♂️ Running Membership Inference Attacks](#️-running-membership-inference-attacks)
+  - [📜 Utilizing Bash Scripts for Experiments](#-utilizing-bash-scripts-for-experiments)
+- [📓 Demo Notebook](#-demo-notebook)
 - [📂 Project Structure](#-project-structure)
 - [🤝 Contributing](#-contributing)
-- [📜 License](#-license)
 
 ## ✨ Features
 
@@ -92,7 +96,7 @@ To perform a Membership Inference Attack on the trained SNN model:
 python3 attack.py --dataset [cifar10|cifar100] --model [vgg16|resnet18|resnet20|cifarnet]
 ```
 
-### 📜 Utilizing Bash Scripts for Experiments
+## 📜 Utilizing Bash Scripts for Experiments
 
 The `Scripts` directory contains various Bash scripts designed to streamline the experimental workflow of the MIA_SNN project. Here's how to effectively use them:
 
@@ -108,6 +112,14 @@ The `Scripts` directory contains various Bash scripts designed to streamline the
      # Perform Attack
      bash Scripts/04_attacks.sh
      ```
+
+## 📓 Demo Notebook
+
+For a hands-on demonstration of the MIA_SNN framework, you can explore the `demo.ipynb` notebook located in the `notebooks/` directory. This notebook provides:
+
+- **Interactive Examples**: Step-by-step guides to train models, convert them to SNNs, and perform membership inference attacks.
+- **Visualizations**: Graphs and plots to help understand the performance and behavior of the models.
+- **Code Snippets**: Ready-to-run code blocks that you can execute in your own environment.
 
 ## 📂 Project Structure
 
