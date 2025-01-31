@@ -93,7 +93,7 @@ Our MIA attack code and logic is inspired out of this work: (Low-Cost High-Power
 To perform a Membership Inference Attack on the trained SNN model:
 
 ```bash
-python3 attack.py --dataset [cifar10|cifar100] --model [vgg16|resnet18|resnet20|cifarnet]
+python3 attack.py --attack [attack_p|attack_r|rmia] --dataset [cifar10|cifar100] --model [vgg16|resnet18|resnet20|cifarnet] --model_type [ann|snn] --t 1 --reference_models 4
 ```
 
 ## 📜 Utilizing Bash Scripts for Experiments
