@@ -61,8 +61,7 @@ class BaseAttack:
 
     def get_results(self):
         logger.info("Getting results ...")
-        results = compute_attack_results(self.scores, TARGET_MEMBERSHIPS)
-        return results
+        self.results = compute_attack_results(self.scores, TARGET_MEMBERSHIPS)
 
 
 class Attack_P(BaseAttack):

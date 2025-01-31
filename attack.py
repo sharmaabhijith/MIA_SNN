@@ -141,7 +141,9 @@ attack = perform_MIA(
             n_samples = args.n_samples,
         )
 attack.compute_scores()
-results = attack.get_results()
+attack.get_results()
+results = attack.results
+scores = attack.scores
 logger.info(f"Results: \n {results}")
 # Save Results
 cali_type = "w_calibration" if args.calibration else "wo_calibration"

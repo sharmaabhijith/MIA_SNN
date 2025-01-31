@@ -30,16 +30,16 @@ def compute_attack_results(mia_scores, target_memberships):
     zero_fpr = tpr_list[zero_fpr_indices[-1]] if zero_fpr_indices.size > 0 else 0.0
 
     return {
-        #"fpr": fpr_list,
-        #"tpr": tpr_list,
+        "fpr": fpr_list,
+        "tpr": tpr_list,
         "auc": roc_auc,
         "one_fpr": one_fpr,
         "one_tenth_fpr": one_tenth_fpr,
         "zero_fpr": zero_fpr,
-        #"thresholds": thresholds
+        "thresholds": thresholds
     }
 
-def visualization(results):
+def plot_auc(results):
     """
     visualize the attack results (ROC curve)
     """
@@ -59,6 +59,35 @@ def visualization(results):
     plt.legend(loc="lower right")
     plt.grid(alpha=0.3)
     plt.show()
+
+
+def plot_histogram(scores):
+    scores_train, scores_test = np.log(scores[:30000]), np.log(scores[30000:])
+    plt.figure(figsize=(8, 6))
+    plt.hist(scores_train, bins=50, color='r', alpha=0.6, label="Train")
+    plt.hist(scores_test, bins=50, color='b', alpha=0.6, label="Test")
+    plt.title("Projection of MIA Scores")
+    plt.xlabel("Log(Scores)")
+    plt.ylabel("Frequency")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+def plot_scatter(scores1, scores2):
+    scores_train1, scores_test1 = np.log(scores1[:30000]), np.log(scores1[30000:])
+    scores_train2, scores_test2 = np.log(scores2[:30000]), np.log(scores2[30000:])
+    plt.figure(figsize=(8, 6))
+    plt.scatter(scores_train1, scores_train2, c='r', label='train')
+    plt.scatter(scores_test1, scores_test2, c='b', label='test')
+    plt.title("Projection of MIA Scores")
+    plt.xlabel("Log(Scores1)")
+    plt.ylabel("Log(Scores2)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
 
 def generate_dropout_image(images, dropout_rate):
     """
