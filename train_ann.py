@@ -77,7 +77,7 @@ for model_idx in range(0, args.reference_models+1):
     if model_idx==0:
         # Load the dataset using the specified parameters
         logger.info("Loading dataset...")
-        dataset = load_dataset(args.dataset, logger)
+        dataset = load_dataset(args.dataset)
         data_split_info = split_dataset(len(dataset), args.reference_models)
         logger.info(f"Total datasets (train-test pairs): {len(data_split_info)}. Assert should be target + reference models: {1 + args.reference_models}")
         pickle.dump(data_split_info, open(os.path.join(primary_model_path, "data_splits.pkl"), "wb"))

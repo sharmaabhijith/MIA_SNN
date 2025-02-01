@@ -16,7 +16,7 @@ from utils import GlobalLogger
 
 logger = GlobalLogger.get_logger(__name__)
 
-def get_dataset(dataset: str, logger: Any, **kwargs: Any) -> Any:
+def get_dataset(dataset: str) -> Any:
     """
     Function to load the dataset from the pickle file or download it from the internet.
 

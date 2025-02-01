@@ -125,7 +125,7 @@ for model_idx in range(0, args.reference_models+1):
     if model_idx==0:
         # Load the dataset using the specified parameters
         logger.info("Loading dataset...")
-        dataset = load_dataset(args.dataset, logger)
+        dataset = load_dataset(args.dataset)
         try:
             data_split_file = os.path.join(primary_model_path, "data_splits.pkl")
             with open(data_split_file, 'rb') as file:

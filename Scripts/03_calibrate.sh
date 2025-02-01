@@ -13,10 +13,10 @@
 
 
 # List of models to train
-MODELS=("resnet34")
+MODELS=("resnet18")
 
 # Dataset
-DATASETS=("cifar10")
+DATASETS=("imagenette")
 
 # Latency
 LATENCY=$(seq 2 4)

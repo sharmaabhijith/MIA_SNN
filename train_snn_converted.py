@@ -12,7 +12,6 @@ from torchvision.models.feature_extraction import create_feature_extractor
 from torch.utils.data import Subset
 import os
 import argparse
-from funcs import *
 import numpy as np
 import calc_th_with_c as ft
 from copy import deepcopy
@@ -20,16 +19,16 @@ import pickle
 from utils import *
 
 
-logger.info("Initializing ANN-to-SNN Conversion Script...")
+print("Initializing ANN-to-SNN Conversion Script...")
 parser = argparse.ArgumentParser(description='PyTorch ANN-SNN Conversion')
 parser.add_argument('--t', default=300, type=int, help='T Latency length (Simulation time-steps)')
 parser.add_argument('--dataset', default='cifar10', type=str, help='Dataset name',
-                    choices=['cifar10', 'cifar100', 'imagenet','tiny-imagenet','fashion'])
+                    choices=['cifar10', 'cifar100', 'imagenette', 'imagewoof'])
 parser.add_argument('--model', default='vgg16', type=str, help='Model name',
                     choices=['vgg16', 'resnet18', 'resnet34', 'resnet50'])
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory for saving models')
 parser.add_argument('--batchsize', default=64, type=int)
-parser.add_argument('--lr', default=5e-3, type=float, help='Learning rate')
+parser.add_argument('--lr', default=1e-3, type=float, help='Learning rate')
 parser.add_argument('--wd', default=5e-4, type=float, help='Weight decay')
 parser.add_argument('--epochs', default=50, type=int)
 parser.add_argument('--device', default='cuda:0', type=str)
@@ -41,7 +40,7 @@ args = parser.parse_args()
 # Check device configuration and set accordingly
 torch.cuda.empty_cache()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-batch_size = 256
+batch_size = 64
 n_steps = args.t
 
 # Creating directory to save trained models and their logs
@@ -77,7 +76,7 @@ for model_idx in range(0, args.reference_models+1):
     if model_idx==0:
         # Load the dataset using the specified parameters
         logger.info("Loading dataset...")
-        dataset = load_dataset(args.dataset, logger)
+        dataset = load_dataset(args.dataset)
         try:
             data_split_file = os.path.join(primary_model_path, "data_splits.pkl")
             with open(data_split_file, 'rb') as file:
@@ -106,7 +105,7 @@ for model_idx in range(0, args.reference_models+1):
     num_relu = str(model).count('ReLU')
     thresholds = torch.zeros(num_relu, 2*n_steps)
     thresholds1 = torch.Tensor(np.load('%s_threshold_all_noaug%d.npy' % (savename, 1)))
-    ann_to_snn(model, thresholds, thresholds1, n_steps, logger)
+    ann_to_snn(model, thresholds, thresholds1, n_steps)
     if n_steps > 1:
         model.load_state_dict(torch.load(f"{savename}_snn_T{n_steps-1}.pth"))
     model.to(device)
