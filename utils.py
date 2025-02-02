@@ -351,11 +351,11 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
 def load_model(model, dataset, model_type, n_reference_models, primary_model_path, device, n_steps):
     target_model = None
     reference_models = []
-    assert len(model_type) == n_reference_models, f"model type should have: {n_reference_models} reference models"
+    assert len(model_type) == n_reference_models+1, f"model type should have: {n_reference_models+1} reference models"
     for mt in model_type.keys():
         if model_type[mt] == "ann":
             temp_model = modelpool(model, dataset)
-            temp_model = temp_model.to(device) = temp_model.to(device)
+            temp_model = temp_model.to(device)
             model_path = os.path.join(primary_model_path, mt, "ann")
             temp_model.load_state_dict(torch.load(model_path + '.pth'))
         elif model_type[mt] == "snn":

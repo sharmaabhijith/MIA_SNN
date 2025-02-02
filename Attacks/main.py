@@ -75,7 +75,7 @@ class BaseAttack:
 class Attack_P(BaseAttack):
     def compute_scores(self):
         """Computes the Attack-P scores for the target model."""
-        self.scores = self.compute_base_confidence(self.target_model, self.model_type[0])
+        self.scores = self.compute_base_confidence(self.target_model, self.model_type['model_0'])
 
 
 class Attack_R(BaseAttack):
@@ -83,14 +83,14 @@ class Attack_R(BaseAttack):
         """Computes the Attack-R scores for the target model."""
         self.target_model.eval()
         target_confidences = np.expand_dims(
-            self.compute_base_confidence(self.target_model, self.model_type[0]), 
+            self.compute_base_confidence(self.target_model, self.model_type['model_0']), 
             axis=0
         )
         reference_confidences = []
         for i, ref_model in enumerate(self.reference_models):
             ref_model.eval()
             reference_confidences.append(
-                self.compute_base_confidence(ref_model, self.model_type[i])
+                self.compute_base_confidence(ref_model, self.model_type[f"model_{i+1}"])
             )
         
         reference_confidences = np.array(reference_confidences)
@@ -105,14 +105,14 @@ class Attack_RMIA(Attack_R):
         """Computes the Attack-RMIA scores for the target model."""
         self.target_model.eval()
         target_confidences = np.expand_dims(
-            self.compute_base_confidence(self.target_model, self.model_type[0]), 
+            self.compute_base_confidence(self.target_model, self.model_type['model_0']), 
             axis=0
         )
         reference_confidences = []
         for i, ref_model in enumerate(self.reference_models):
             ref_model.eval()
             reference_confidences.append(
-                self.compute_base_confidence(ref_model, self.model_type[i])
+                self.compute_base_confidence(ref_model, self.model_type[f"model_{i+1}"])
             )
         reference_confidences = np.array(reference_confidences)
         pr_x = np.mean(reference_confidences, axis=0)

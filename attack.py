@@ -27,8 +27,8 @@ parser.add_argument('--dataset', default='cifar10', type=str, help='Dataset name
                     choices=DATASET_NAMES)
 parser.add_argument('--model', default='resnet18', type=str, help='Model name',
                     choices=MODEL_NAMES)
-parser.add_argument('--model_type', default='ann', type=str, help='ANN or SNN',
-                    choices=["ann", "snn"])
+parser.add_argument('--model_type', default="{'model_0':'ann', 'model_1':'ann', 'model_2':'ann', 'model_3':'ann', 'model_4':'ann'}",
+        type=str, help='ANN or SNN')
 parser.add_argument('--t', default=300, type=int, help='T Latency length (Simulation time-steps)')
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory of saved models')
 parser.add_argument('--reference_models', default=4, type=int, help='Number of reference models')
@@ -45,7 +45,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size = 128
 n_steps = args.t
 model_type = json.loads(args.model_type)
-
+print(model_type)
+print(model_type.keys())
 unique_model_types = set(model_type.values())
 if len(unique_model_types)==1:
     if unique_model_types[0]=="ann":
@@ -110,7 +111,7 @@ logger.info(f"Arguments: {args}")
 logger.info(f"Device: {'GPU' if torch.cuda.is_available() else 'CPU'}")
 # Load the dataset using the specified parameters
 logger.info("Loading dataset...")
-dataset = load_dataset(args.dataset, logger)
+dataset = load_dataset(args.dataset)
 try:
     data_split_file = os.path.join(primary_model_path, "data_splits.pkl")
     with open(data_split_file, 'rb') as file:

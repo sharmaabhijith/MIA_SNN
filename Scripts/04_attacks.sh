@@ -12,15 +12,15 @@
 #SBATCH -q cscc-gpu-qos
 
 # Define the parameter combinations
-ATTACKS=("attack_r" "rmia")
-DATASETS=("cifar10" "cifar100")
+ATTACKS=("rmia" "attack_r")
+DATASETS=("cifar100" "cifar10")
 MODEL="resnet18"
-MODEL_TYPE="{'model_0':'snn', 'model_1':'ann', 'model_2':'ann', 'model_3':'ann', 'model_4':'ann'}"
+MODEL_TYPE="{\"model_0\": \"snn\", \"model_1\": \"ann\", \"model_2\": \"ann\", \"model_3\": \"ann\", \"model_4\": \"ann\"}"
 LATENCIES=(1 2 4)
 REF_MODELS=4
 CALIBRATIONS=(0 1)
 DROPOUT=0.01
-N_SAMPLES=5
+N_SAMPLES=30
 
 # Iterate over all combinations
 for ATTACK in "${ATTACKS[@]}"; do
