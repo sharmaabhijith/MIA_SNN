@@ -43,12 +43,18 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 batch_size = 128
 n_steps = args.t
-if args.model_type=="ann":
-    half_model_type = "ann"
-    full_model_type = "ann"
-elif args.model_type=="snn":
-    half_model_type = f"snn_T{n_steps}"
-    full_model_type = f"ann_snn_T{n_steps}"
+model_type = args.model_type
+unique_model_types = set(model_type.values())
+if len(unique_model_types)==1:
+    if unique_model_types[0]=="ann":
+        half_model_type = "ann"
+        full_model_type = "ann"
+    elif unique_model_types[0]=="snn":
+        half_model_type = f"snn_T{n_steps}"
+        full_model_type = f"ann_snn_T{n_steps}"
+else:
+    half_model_type = f"snn_T{n_steps}_x_ann"
+    full_model_type = f"snn_T{n_steps}_x_ann"
 
 n_reference_models = args.reference_models
 # Creating directory to save trained models and their logs
@@ -69,8 +75,8 @@ else:
     sub_column_names1 = ATTACK_NAMES
     sub_column_names2 = [f"snn_T{i}" for i in [1, 2, 4]] + ["ann"] 
     column_tuples = [
-        (data, attack, model_type) 
-        for data in column_names for attack in sub_column_names1 for model_type in sub_column_names2
+        (data, attack, mod_typ) 
+        for data in column_names for attack in sub_column_names1 for mod_typ in sub_column_names2
     ]
     columns = pd.MultiIndex.from_tuples(column_tuples)
     # Define Multi-level rows

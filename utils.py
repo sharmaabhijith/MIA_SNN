@@ -351,38 +351,29 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
 def load_model(model, dataset, model_type, n_reference_models, primary_model_path, device, n_steps):
     target_model = None
     reference_models = []
-    if "ann" == model_type:
-        target_model = modelpool(model, dataset)
-        target_model.to(device)
-        model_path = os.path.join(primary_model_path, f"model_0", "ann")
-        target_model.load_state_dict(torch.load(model_path + '.pth'))
-        for idx in range(n_reference_models):
-            ref_model = modelpool(model, dataset)
-            ref_model.to(device)
-            model_path = os.path.join(primary_model_path, f"model_{idx+1}", "ann")
-            ref_model.load_state_dict(torch.load(model_path + '.pth'))
-            reference_models.append(ref_model)
-    elif "snn" == model_type:
-        target_model = modelpool(model, dataset)
-        target_model = target_model.to(device)
-        model_path = os.path.join(primary_model_path, f"model_0", f"ann_snn_T{n_steps}")
-        ann_model_path = os.path.join(primary_model_path, f"model_0", "ann")
-        num_relu = str(target_model).count('ReLU')
-        thresholds = torch.zeros(num_relu, 2*n_steps)
-        thresholds1 = torch.Tensor(np.load('%s_threshold_all_noaug%d.npy' % (ann_model_path, 1)))
-        target_model, threshold_new = ann_to_snn(target_model, thresholds, thresholds1, n_steps)
-        target_model.load_state_dict(torch.load(model_path + '.pth'))
-        for idx in range(n_reference_models):
-            ref_model = modelpool(model, dataset)
-            ref_model.to(device)
-            model_path = os.path.join(primary_model_path, f"model_{idx+1}", f"ann_snn_T{n_steps}")
-            ann_model_path = os.path.join(primary_model_path, f"model_{idx+1}", "ann")
-            num_relu = str(ref_model).count('ReLU')
+    assert len(model_type) == n_reference_models, f"model type should have: {n_reference_models} reference models"
+    for mt in model_type.keys():
+        if model_type[mt] == "ann":
+            temp_model = modelpool(model, dataset)
+            temp_model = temp_model.to(device) = temp_model.to(device)
+            model_path = os.path.join(primary_model_path, mt, "ann")
+            temp_model.load_state_dict(torch.load(model_path + '.pth'))
+        elif model_type[mt] == "snn":
+            assert n_steps is not None, "n_steps must be provided for SNN models."
+            temp_model = modelpool(model, dataset)
+            temp_model = temp_model.to(device)
+            model_path = os.path.join(primary_model_path, mt, f"ann_snn_T{n_steps}")
+            ann_model_path = os.path.join(primary_model_path, f"model_0", "ann")
+            num_relu = str(temp_model).count('ReLU')
             thresholds = torch.zeros(num_relu, 2*n_steps)
             thresholds1 = torch.Tensor(np.load('%s_threshold_all_noaug%d.npy' % (ann_model_path, 1)))
-            ref_model, threshold_new = ann_to_snn(ref_model, thresholds, thresholds1, n_steps)
-            ref_model.load_state_dict(torch.load(model_path + '.pth'))
-            reference_models.append(ref_model)
+            temp_model, threshold_new = ann_to_snn(temp_model, thresholds, thresholds1, n_steps)
+            temp_model.load_state_dict(torch.load(model_path + '.pth'))
+
+        if mt == "model_0":
+            target_model = temp_model
+        else:
+            reference_models.append(temp_model)
 
     return target_model, reference_models
 
