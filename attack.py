@@ -1,4 +1,5 @@
 import torch
+import json
 import pickle
 import argparse
 import logging
@@ -43,7 +44,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 batch_size = 128
 n_steps = args.t
-model_type = args.model_type
+model_type = json.loads(args.model_type)
+
 unique_model_types = set(model_type.values())
 if len(unique_model_types)==1:
     if unique_model_types[0]=="ann":
@@ -53,7 +55,7 @@ if len(unique_model_types)==1:
         half_model_type = f"snn_T{n_steps}"
         full_model_type = f"ann_snn_T{n_steps}"
 else:
-    half_model_type = f"snn_T{n_steps}_x_ann"
+    half_model_type = f"snn_T{n_steps}_ann"
     full_model_type = f"snn_T{n_steps}_x_ann"
 
 n_reference_models = args.reference_models
@@ -73,7 +75,8 @@ else:
     # Define Multi-level columns
     column_names = DATASET_NAMES
     sub_column_names1 = ATTACK_NAMES
-    sub_column_names2 = [f"snn_T{i}" for i in [1, 2, 4]] + ["ann"] 
+    sub_column_names2 = [f"snn_T{i}" for i in [1, 2, 4]] + ["ann"]
+    sub_column_names2 = sub_column_names2 + [f"snn_T{i}_ann" for i in [1, 2, 4]] 
     column_tuples = [
         (data, attack, mod_typ) 
         for data in column_names for attack in sub_column_names1 for mod_typ in sub_column_names2
@@ -131,12 +134,12 @@ logger.info(f"Dataset loaded successfully. Batches: {len(data_loader)}")
 logger.info(f"Loading {full_model_type} model: {args.model} for dataset: {args.dataset}")
 # Load trained models
 target_model, reference_models = load_model(
-    args.model, args.dataset, args.model_type, args.reference_models, primary_model_path, device, n_steps
+    args.model, args.dataset, model_type, args.reference_models, primary_model_path, device, n_steps
 )
 # Perform attack and get results
 attack = perform_MIA(
             attack_type = args.attack, 
-            model_type = args.model_type,
+            model_type = model_type,
             target_model = target_model, 
             reference_models = reference_models, 
             data_loader = data_loader, 
