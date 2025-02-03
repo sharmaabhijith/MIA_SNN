@@ -14,7 +14,7 @@ from Attacks import *
 
 
 ATTACK_NAMES = ["attack_p", "attack_r", "rmia"]
-DATASET_NAMES = ["cifar10", "cifar100"]
+DATASET_NAMES = ["cifar10", "cifar100" "imagenette" "imagewoof"]
 MODEL_NAMES = ["vgg16", "resnet18", "resnet34"]
 
 
