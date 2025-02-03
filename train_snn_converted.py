@@ -40,7 +40,7 @@ args = parser.parse_args()
 # Check device configuration and set accordingly
 torch.cuda.empty_cache()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-batch_size = 64
+batch_size = 16
 n_steps = args.t
 
 # Creating directory to save trained models and their logs

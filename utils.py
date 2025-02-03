@@ -254,7 +254,7 @@ def train_snn(train_dataloader, test_loader, model, n_steps, epochs, optimizer,
         logger.info(f"Epoch {epoch+1} - Train Loss: {epoch_loss/total:.4f}, Train Accuracy: {100 * correct / total:.2f}%")
         scheduler.step()
 
-        test_loss, test_acc = test_snn(model, test_loader, n_steps, loss_fn, device)
+        test_loss, test_acc = test_snn(model, test_loader, n_steps, loss_fn, device, logger)
         if best_acc <= test_acc:
             save_path = f"{savename}_snn_T{n_steps}"
             torch.save(model.state_dict(), save_path + ".pth")
