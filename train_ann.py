@@ -10,7 +10,6 @@ from torchvision.models.feature_extraction import create_feature_extractor
 from torch.utils.data import Subset
 import os
 import argparse
-from funcs import *
 import numpy as np
 import time
 import pickle
@@ -29,9 +28,9 @@ parser.add_argument('--model', default='vgg16', type=str, help='Model name',
                              'vgg11', 'vgg13', 'vgg16', 'vgg19', 'vgg16_normed', 'alexnet',
                              'resnet18', 'resnet19', 'resnet20', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'cifarnet'])
 parser.add_argument('--checkpoint', default='./saved_models', type=str, help='Directory for saving models')
-parser.add_argument('--lr', default=0.1, type=float, help='Learning rate')
+parser.add_argument('--lr', default=0.02, type=float, help='Learning rate')
 parser.add_argument('--wd', default=5e-4, type=float, help='Weight decay')
-parser.add_argument('--epochs', default=64, type=int)
+parser.add_argument('--epochs', default=250, type=int)
 parser.add_argument('--reference_models', default=4, type=int, help='Number of reference models')
 
 args = parser.parse_args()
@@ -42,11 +41,11 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Define hyperparameters
 num_epochs = args.epochs
-batch_size = 128  
+batch_size = 256
 
 # Creating directory to save trained models and their logs
-primary_model_path = os.path.join(args.checkpoint, args.dataset, args.model, f"ref_models_{args.reference_models}")
-primary_log_path = os.path.join("logs", args.dataset, args.model, f"ref_models_{args.reference_models}")
+primary_model_path = os.path.join(args.checkpoint, "wotrans", args.dataset, args.model, f"ref_models_{args.reference_models}")
+primary_log_path = os.path.join("logs", "wotrans",args.dataset, args.model, f"ref_models_{args.reference_models}")
 
 for model_idx in range(0, args.reference_models+1):
     # Model created with idx 0 is always the target model

@@ -6,7 +6,6 @@ from Preprocess import datapool, get_dataloader_from_dataset, load_dataset
 from torch.utils.data import Subset
 import os
 import argparse
-from funcs import *
 from utils import *
 import numpy as np
 import time
@@ -85,7 +84,7 @@ parser.add_argument('--reference_models', default=4, type=int, help='Number of r
 
 args = parser.parse_args()
 
-batch_size = 256
+batch_size = 128
 sample = 0
 n_steps = 1
 
@@ -93,8 +92,8 @@ n_steps = 1
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Creating directory to save trained models and their logs
-primary_model_path = os.path.join(args.checkpoint, args.dataset, args.model, f"ref_models_{args.reference_models}")
-primary_log_path = os.path.join("logs", args.dataset, args.model, f"ref_models_{args.reference_models}")
+primary_model_path = os.path.join(args.checkpoint, "wotrans", args.dataset, args.model, f"ref_models_{args.reference_models}")
+primary_log_path = os.path.join("logs", "wotrans",args.dataset, args.model, f"ref_models_{args.reference_models}")
 
 for model_idx in range(0, args.reference_models+1):
     # Model created with idx 0 is always the target model

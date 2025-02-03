@@ -3,7 +3,7 @@ import pickle
 import torch
 import random
 import logging
-import tqdm
+from tqdm import tqdm
 import numpy as np
 import torch.nn as nn
 from copy import deepcopy
@@ -258,8 +258,6 @@ def train_snn(train_dataloader, test_loader, model, n_steps, epochs, optimizer,
         if best_acc <= test_acc:
             save_path = f"{savename}_snn_T{n_steps}"
             torch.save(model.state_dict(), save_path + ".pth")
-            with open(save_path + ".pkl", "wb") as f:
-                pickle.dump(model.state_dict(), f)
             best_acc = test_acc
             best_epoch = epoch
             logger.info(f"New Best Accuracy: {best_acc:.2f}% at Epoch {best_epoch+1}. Model saved to {save_path}.")
@@ -296,7 +294,7 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
     model.cuda(device)
     para1, para2, para3 = regular_set(model)
     
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    #optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 	#optimizer = torch.optim.SGD
     #(
     #        [
@@ -308,7 +306,7 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
     #        momentum=0.1
 	#)
 	
-    #optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.1)
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.1)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     
     best_acc = 0
@@ -338,8 +336,6 @@ def train_ann(train_dataloader, test_dataloader, model, epochs, device, loss_fn,
 
         if tmp_acc >= best_acc:
             torch.save(model.state_dict(), save + '.pth')
-            with open(save + ".pkl", "wb") as f:
-                pickle.dump(model.state_dict(), f)
             best_acc = tmp_acc
             logger.info(f"New best model saved with accuracy: {best_acc:.4f}")
 
