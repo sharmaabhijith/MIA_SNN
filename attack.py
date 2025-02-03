@@ -14,7 +14,7 @@ from Attacks import *
 
 
 ATTACK_NAMES = ["attack_p", "attack_r", "rmia"]
-DATASET_NAMES = ["cifar10", "cifar100", "imagenette", "imagewoof"]
+DATASET_NAMES = ["cifar10", "cifar100"]
 MODEL_NAMES = ["vgg16", "resnet18", "resnet34"]
 
 
@@ -45,8 +45,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size = 128
 n_steps = args.t
 model_type = json.loads(args.model_type)
-print(model_type)
-print(model_type.keys())
 unique_model_types = set(model_type.values())
 if len(unique_model_types)==1:
     if unique_model_types[0]=="ann":
@@ -71,7 +69,8 @@ if os.path.exists(primary_result_path) is False:
 # Create result csv file if not exists
 result_file_path = Path(primary_result_path, f"results_rm{n_reference_models}.csv")
 if os.path.exists(result_file_path):
-    existing_df = pd.read_csv(result_file_path)
+    existing_df = pd.read_csv(result_file_path, index_col=[0, 1], header=[0, 1, 2])
+    existing_df.columns = pd.MultiIndex.from_tuples(existing_df.columns.to_list())
 else:
     # Define Multi-level columns
     column_names = DATASET_NAMES
@@ -89,8 +88,12 @@ else:
     row_tuples = [(model_name, cali) for model_name in row_names for cali in sub_row_names]
     rows= pd.MultiIndex.from_tuples(row_tuples)
     existing_df = pd.DataFrame(index=rows, columns=columns)
-    existing_df.to_csv(result_file_path)
+    existing_df.to_csv(result_file_path, index=True, header=True)
 
+#print("Row Index:", existing_df.index)
+#print("Column Index:", existing_df.columns)
+#print((args.model, "wo_calibration") in existing_df.index)  # Should be True
+#print((args.dataset, args.attack, half_model_type) in existing_df.columns)  # Should be True
 # Create log dir
 full_log_path = os.path.join(primary_log_path, args.attack)
 if os.path.exists(full_log_path) is False:
@@ -154,8 +157,9 @@ attack.compute_scores()
 attack.get_results()
 results = attack.results
 scores = attack.scores
-logger.info(f"Results: \n {results}")
+logger.info(f"Results (AUC): \n {results['auc']}")
 # Save Results
 cali_type = "w_calibration" if args.calibration else "wo_calibration"
-existing_df[(args.dataset, args.attack, half_model_type), (args.model, cali_type)] = results
+
+existing_df.loc[(args.model, cali_type), (args.dataset, args.attack, half_model_type)] = json.dumps(results)
 existing_df.to_csv(result_file_path)

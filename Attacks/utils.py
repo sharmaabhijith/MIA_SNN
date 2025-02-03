@@ -30,13 +30,13 @@ def compute_attack_results(mia_scores, target_memberships):
     zero_fpr = tpr_list[zero_fpr_indices[-1]] if zero_fpr_indices.size > 0 else 0.0
 
     return {
-        "fpr": fpr_list,
-        "tpr": tpr_list,
+        "fpr": fpr_list.tolist(),
+        "tpr": tpr_list.tolist(),
         "auc": roc_auc,
         "one_fpr": one_fpr,
         "one_tenth_fpr": one_tenth_fpr,
         "zero_fpr": zero_fpr,
-        "thresholds": thresholds
+        "thresholds": thresholds.tolist()
     }
 
 def plot_auc(results):

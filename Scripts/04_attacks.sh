@@ -13,7 +13,7 @@
 
 # Define the parameter combinations
 ATTACKS=("rmia" "attack_r")
-DATASETS=("cifar100" "cifar10")
+DATASETS=("cifar10" "cifar100")
 MODEL="resnet18"
 MODEL_TYPE="{\"model_0\": \"snn\", \"model_1\": \"ann\", \"model_2\": \"ann\", \"model_3\": \"ann\", \"model_4\": \"ann\"}"
 LATENCIES=(1 2 4)
