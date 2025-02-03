@@ -60,7 +60,7 @@ else:
 n_reference_models = args.reference_models
 # Creating directory to save trained models and their logs
 primary_model_path = os.path.join(args.checkpoint, args.dataset, args.model, f"ref_models_{n_reference_models}")
-primary_result_path = os.path.join(args.result_dir, args.dataset)
+primary_result_path = os.path.join(args.result_dir)
 primary_log_path = os.path.join("attack_logs", args.dataset, args.model, f"ref_models_{n_reference_models}")
 # Create result dir
 if os.path.exists(primary_result_path) is False:
@@ -81,12 +81,12 @@ else:
         (data, attack, mod_typ) 
         for data in column_names for attack in sub_column_names1 for mod_typ in sub_column_names2
     ]
-    columns = pd.MultiIndex.from_tuples(column_tuples)
+    columns = pd.MultiIndex.from_tuples(column_tuples, names=["Dataset", "Attack", "Model_Type"])
     # Define Multi-level rows
     row_names = MODEL_NAMES
-    sub_row_names = ["wo_calibration", "w_calibration"] 
+    sub_row_names = ["No", "Yes"] 
     row_tuples = [(model_name, cali) for model_name in row_names for cali in sub_row_names]
-    rows= pd.MultiIndex.from_tuples(row_tuples)
+    rows= pd.MultiIndex.from_tuples(row_tuples, names=["Model", "Calibration"])
     existing_df = pd.DataFrame(index=rows, columns=columns)
     existing_df.to_csv(result_file_path, index=True, header=True)
 
@@ -159,7 +159,7 @@ results = attack.results
 scores = attack.scores
 logger.info(f"Results (AUC): \n {results['auc']}")
 # Save Results
-cali_type = "w_calibration" if args.calibration else "wo_calibration"
+cali_type = "Yes" if args.calibration else "No"
 
 existing_df.loc[(args.model, cali_type), (args.dataset, args.attack, half_model_type)] = json.dumps(results)
 existing_df.to_csv(result_file_path)
