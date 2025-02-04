@@ -45,7 +45,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size = 128
 n_steps = args.t
 model_type = json.loads(args.model_type)
-unique_model_types = set(model_type.values())
+unique_model_types = list(set(model_type.values()))
 if len(unique_model_types)==1:
     if unique_model_types[0]=="ann":
         half_model_type = "ann"
